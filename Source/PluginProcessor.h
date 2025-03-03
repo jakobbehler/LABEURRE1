@@ -92,7 +92,6 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     
     using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
     
-
     using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
     
     MonoChain leftChain, rightChain;
@@ -103,7 +102,13 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
         Peak,
         HighCut
     };
-
+    
+    void updatePeakFilter(const ChainSettings& chainSettings);
+    
+    //datatype of the IIR filter coeffs
+    using Coefficients = Filter::CoefficientsPtr;
+    static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
 };
