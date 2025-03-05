@@ -114,7 +114,9 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     template<typename ChainType, typename CoefficientType> void updateCutFilter(ChainType& leftLowCut,
                                                                                 const CoefficientType& cutCoefficients,
                                                                                 const Slope& lowCutSlope);
-                        
+    void updateLowCut(const ChainSettings& chainSettings);
+    void updateHighCut(const ChainSettings& chainSettings);
+    void updateFilters(const ChainSettings& chainSettings);
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
