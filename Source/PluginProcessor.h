@@ -20,6 +20,7 @@ enum Slope
     Slope_48
 };
 
+// A structure containing all the parameters of the plugin
 struct ChainSettings
 {
     float peakFreq {0},  peakGainDecibels {0}, peakQuality {1.f};
@@ -27,7 +28,6 @@ struct ChainSettings
     
     Slope lowCutSlope{Slope::Slope_12},  highCutSlope{Slope::Slope_12};
 };
-
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
@@ -90,6 +90,7 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     // Type Aliases and Processor Chains
     using Filter = juce::dsp::IIR::Filter<float>;
     
+
     using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
     
     using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
@@ -107,16 +108,13 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     
     //datatype of the IIR filter coeffs
     using Coefficients = Filter::CoefficientsPtr;
+    
+    // parameters update funtions
     static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
-    
-    template<typename ChainType, typename CoefficientType>
-    void updateCutFilter(ChainType& leftLowCut,
-                         const CoefficientType& cutCoefficients,
-                         //const ChainSettings& chainSettings),
-                         const Slope& lowCutSlope);
+    template<typename ChainType, typename CoefficientType> void updateCutFilter(ChainType& leftLowCut,
+                                                                                const CoefficientType& cutCoefficients,
+                                                                                const Slope& lowCutSlope);
                         
-    
-    
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)

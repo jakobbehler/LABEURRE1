@@ -91,6 +91,9 @@ void SimpleEQAudioProcessor::changeProgramName (int index, const juce::String& n
 }
 
 //==============================================================================
+// PREPARE TO PLAY
+//==============================================================================
+
 void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Initialize left and right channel and their DSP chains
@@ -152,6 +155,12 @@ bool SimpleEQAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 }
 #endif
 
+
+//==============================================================================
+// PROCESS BLOCK
+//==============================================================================
+
+
 void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -181,49 +190,6 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     updateCutFilter(leftLowCut, cutCoefficients, chainSettings.lowCutSlope);
     updateCutFilter(rightLowCut, cutCoefficients, chainSettings.lowCutSlope);
     
-
-    
-
-//    rightLowCut.setBypassed<0>(true);
-//    rightLowCut.setBypassed<1>(true);
-//    rightLowCut.setBypassed<2>(true);
-//    rightLowCut.setBypassed<3>(true);
-//    
-//    switch(chainSettings.lowCutSlope)
-//    {
-//            
-//        case Slope_12:
-//            *rightLowCut.get<0>().coefficients = *cutCoefficients[0];
-//            rightLowCut.setBypassed<0>(false);
-//        break;
-//        case Slope_24:
-//            *rightLowCut.get<0>().coefficients = *cutCoefficients[0];
-//            rightLowCut.setBypassed<0>(false);
-//            *rightLowCut.get<1>().coefficients = *cutCoefficients[1];
-//            rightLowCut.setBypassed<1>(false);
-//        
-//        break;
-//        case Slope_36:
-//            *rightLowCut.get<0>().coefficients = *cutCoefficients[0];
-//            rightLowCut.setBypassed<0>(false);
-//            *rightLowCut.get<1>().coefficients = *cutCoefficients[1];
-//            rightLowCut.setBypassed<1>(false);
-//            *rightLowCut.get<2>().coefficients = *cutCoefficients[2];
-//            rightLowCut.setBypassed<2>(false);
-//        
-//        break;
-//        case Slope_48:
-//            *rightLowCut.get<0>().coefficients = *cutCoefficients[0];
-//            rightLowCut.setBypassed<0>(false);
-//            *rightLowCut.get<1>().coefficients = *cutCoefficients[1];
-//            rightLowCut.setBypassed<1>(false);
-//            *rightLowCut.get<2>().coefficients = *cutCoefficients[2];
-//            rightLowCut.setBypassed<2>(false);
-//            *rightLowCut.get<3>().coefficients = *cutCoefficients[3];
-//            rightLowCut.setBypassed<3>(false);
-//        
-//        break;
-//    }
     
     // creating context block by defining channels ----------------------------
     
@@ -266,11 +232,11 @@ void SimpleEQAudioProcessor::setStateInformation (const void* data, int sizeInBy
     // whose contents will have been created by the getStateInformation() call.
 }
 
-//==============================================================================
+//=========================================================================================================
 
+// PARAMETER INITIALIZATION
 
-
-// parameter initialization
+//=========================================================================================================
 
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
@@ -305,60 +271,56 @@ void SimpleEQAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings
     updateCoefficients(rightChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
 }
 
-
 void SimpleEQAudioProcessor::updateCoefficients(Coefficients& old, const Coefficients& replacements)
 {
     *old = *replacements;
 }
 
-template<typename ChainType, typename CoefficientType> void SimpleEQAudioProcessor::updateCutFilter(ChainType& leftLowCut,
+template<typename ChainType, typename CoefficientType> void SimpleEQAudioProcessor::updateCutFilter(ChainType& LowCut,
                                                                                                     const CoefficientType& cutCoefficients,
                                                                                                     const Slope& lowCutSlope)
-                    
 {
-    leftLowCut.template setBypassed<0>(true);
-    leftLowCut.template setBypassed<1>(true);
-    leftLowCut.template setBypassed<2>(true);
-    leftLowCut.template setBypassed<3>(true);
+    LowCut.template setBypassed<0>(true);
+    LowCut.template setBypassed<1>(true);
+    LowCut.template setBypassed<2>(true);
+    LowCut.template setBypassed<3>(true);
 
     switch(lowCutSlope)
     {
 
         case Slope_12:
-            *leftLowCut.template get<0>().coefficients = *cutCoefficients[0];
-            leftLowCut.template setBypassed<0>(false);
+            *LowCut.template get<0>().coefficients = *cutCoefficients[0];
+            LowCut.template setBypassed<0>(false);
         break;
         case Slope_24:
-            *leftLowCut.template get<0>().coefficients = *cutCoefficients[0];
-            leftLowCut.template setBypassed<0>(false);
-            *leftLowCut.template get<1>().coefficients = *cutCoefficients[1];
-            leftLowCut.template setBypassed<1>(false);
+            *LowCut.template get<0>().coefficients = *cutCoefficients[0];
+            LowCut.template setBypassed<0>(false);
+            *LowCut.template get<1>().coefficients = *cutCoefficients[1];
+            LowCut.template setBypassed<1>(false);
 
         break;
         case Slope_36:
-            *leftLowCut.template get<0>().coefficients = *cutCoefficients[0];
-            leftLowCut.template setBypassed<0>(false);
-            *leftLowCut.template get<1>().coefficients = *cutCoefficients[1];
-            leftLowCut.template setBypassed<1>(false);
-            *leftLowCut.template get<2>().coefficients = *cutCoefficients[2];
-            leftLowCut.template setBypassed<2>(false);
+            *LowCut.template get<0>().coefficients = *cutCoefficients[0];
+            LowCut.template setBypassed<0>(false);
+            *LowCut.template get<1>().coefficients = *cutCoefficients[1];
+            LowCut.template setBypassed<1>(false);
+            *LowCut.template get<2>().coefficients = *cutCoefficients[2];
+            LowCut.template setBypassed<2>(false);
 
         break;
         case Slope_48:
-            *leftLowCut.template get<0>().coefficients = *cutCoefficients[0];
-            leftLowCut.template setBypassed<0>(false);
-            *leftLowCut.template get<1>().coefficients = *cutCoefficients[1];
-            leftLowCut.template setBypassed<1>(false);
-            *leftLowCut.template get<2>().coefficients = *cutCoefficients[2];
-            leftLowCut.template setBypassed<2>(false);
-            *leftLowCut.template get<3>().coefficients = *cutCoefficients[3];
-            leftLowCut.template setBypassed<3>(false);
+            *LowCut.template get<0>().coefficients = *cutCoefficients[0];
+            LowCut.template setBypassed<0>(false);
+            *LowCut.template get<1>().coefficients = *cutCoefficients[1];
+            LowCut.template setBypassed<1>(false);
+            *LowCut.template get<2>().coefficients = *cutCoefficients[2];
+            LowCut.template setBypassed<2>(false);
+            *LowCut.template get<3>().coefficients = *cutCoefficients[3];
+            LowCut.template setBypassed<3>(false);
 
         break;
     }
-    
 }
-
 
 
 // CREATING PARAMETERS ---------------------------------------------------------
@@ -367,8 +329,6 @@ template<typename ChainType, typename CoefficientType> void SimpleEQAudioProcess
 juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    
-    
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lowcut_freq", 1),
                                                            "LowCut Freq",
@@ -412,7 +372,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
 
     return layout;
 }
-
 
 
 
