@@ -23,10 +23,16 @@ enum Slope
 // A structure containing all the parameters of the plugin
 struct ChainSettings
 {
-    float peakFreq {0},  peakGainDecibels {0}, peakQuality {1.f};
-    float lowCutFreq{0}, highCutFreq{0};
+    float bandsplit_frequency {0},  compLowIntensity {0}, compHighIntensity {0}, distLowIntensity {0}, distHighIntensity {0};
+    //float lowCutFreq{0}, highCutFreq{0};
     
-    Slope lowCutSlope{Slope::Slope_12},  highCutSlope{Slope::Slope_12};
+    //Slope lowCutSlope{Slope::Slope_12},  highCutSlope{Slope::Slope_12};
+};
+
+struct CompressorSettings {
+    float threshold;
+    float ratio;
+    float makeupGain;
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -88,14 +94,30 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     private:
     
     // Type Aliases and Processor Chains
-    using Filter = juce::dsp::IIR::Filter<float>;
-    
 
-    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-    
-    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
-    
-    MonoChain leftChain, rightChain;
+    // Define filters and compressors
+    using Filter = juce::dsp::IIR::Filter<float>;
+    using Compressor = juce::dsp::Compressor<float>;
+    using Gain = juce::dsp::Gain<float>;
+
+    // Crossover filter (Linkwitz-Riley)
+    using Crossover = juce::dsp::LinkwitzRileyFilter<float>;
+
+    // Low-band chain: Low-pass + Compressor
+    using LowBandChain = juce::dsp::ProcessorChain<Filter, Compressor, Gain>;
+
+    // High-band chain: High-pass + Compressor
+    using HighBandChain = juce::dsp::ProcessorChain<Filter, Compressor, Gain>;
+
+    // Full Processor Chain: Crossover, then two independent bands
+    using MultiBandCompressorChain = juce::dsp::ProcessorChain<
+        Crossover, // Band-splitter
+        LowBandChain,
+        HighBandChain
+    >;
+
+   
+    MultiBandCompressorChain leftChain, rightChain;
     
     enum ChainPositions
     {
@@ -114,9 +136,10 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     template<typename ChainType, typename CoefficientType> void updateCutFilter(ChainType& leftLowCut,
                                                                                 const CoefficientType& cutCoefficients,
                                                                                 const Slope& lowCutSlope);
-    void updateLowCut(const ChainSettings& chainSettings);
-    void updateHighCut(const ChainSettings& chainSettings);
-    void updateFilters();
+    
+    CompressorSettings getCompressorSettings(const double intensity);
+    void applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings);
+    void updateCompressor();
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)

@@ -105,12 +105,15 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     leftChain.prepare(spec);
     rightChain.prepare(spec);
     
-    auto chainSettings = getChainSettings(apvts);
+    float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
+
+    // Set crossover filter cutoff
+    leftChain.get<0>().setCutoffFrequency(crossoverFreq);
+    rightChain.get<0>().setCutoffFrequency(crossoverFreq);
     
-    // UPDATE FILTERS
-    updateFilters();
-    
+    updateCompressor();
 }
+
 
 
 void SimpleEQAudioProcessor::releaseResources()
@@ -150,44 +153,84 @@ bool SimpleEQAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 // PROCESS BLOCK
 //==============================================================================
 
-
-void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+//
+//void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+//{
+//    juce::ScopedNoDenormals noDenormals;
+//    auto totalNumInputChannels  = getTotalNumInputChannels();
+//    auto totalNumOutputChannels = getTotalNumOutputChannels();
+//
+//    // In case we have more outputs than inputs, this code clears any output
+//    // channels that didn't contain input data, (because these aren't
+//    // guaranteed to be empty - they may contain garbage).
+//    // This is here to avoid people getting screaming feedback
+//    // when they first compile a plugin, but obviously you don't need to keep
+//    // this code if your algorithm always overwrites all the output channels.
+//    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+//        buffer.clear (i, 0, buffer.getNumSamples());
+//
+//
+//
+//    updateCompressor();
+//
+//    // creating context block by defining channels ----------------------------
+//
+//    juce::dsp::AudioBlock<float> block(buffer);
+//
+//    auto leftBlock = block.getSingleChannelBlock(0);
+//    auto rightBlock = block.getSingleChannelBlock(1);
+//
+//    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+//    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+//
+//    leftChain.process(leftContext);
+//    rightChain.process(rightContext);
+//
+//}
+void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // 🔥 Ensure compressor updates in real-time
+    updateCompressor();
+    
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear(i, 0, buffer.getNumSamples());
 
-    //
-    
-    auto chainSettings = getChainSettings(apvts);
-    
-    // UPDATE FILTERS
-    updateFilters();
-    
-    
-    // creating context block by defining channels ----------------------------
-    
-    juce::dsp::AudioBlock<float> block(buffer);
-    
-    auto leftBlock = block.getSingleChannelBlock(0);
-    auto rightBlock = block.getSingleChannelBlock(1);
-    
-    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-    
-    leftChain.process(leftContext);
-    rightChain.process(rightContext);
-    
+    float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
+    leftChain.get<0>().setCutoffFrequency(crossoverFreq);
+    rightChain.get<0>().setCutoffFrequency(crossoverFreq);
+
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        auto* channelData = buffer.getWritePointer(channel);
+        auto& chain = (channel == 0) ? leftChain : rightChain;
+
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            float inputSample = channelData[sample];
+
+            float lowSample, highSample;
+            chain.get<0>().processSample(channel, inputSample, lowSample, highSample);
+
+            // ✅ Apply
+            lowSample = chain.get<1>().get<1>().processSample(channel, lowSample);
+            highSample = chain.get<2>().get<1>().processSample(channel, highSample);
+            
+            // ✅ Apply Gain (Makeup Compensation)
+            lowSample = chain.get<1>().get<2>().processSample(lowSample);
+            highSample = chain.get<2>().get<2>().processSample(highSample);
+
+            channelData[sample] = lowSample + highSample;
+        }
+    }
 }
+
+
+
 
 //==============================================================================
 bool SimpleEQAudioProcessor::hasEditor() const
@@ -221,7 +264,8 @@ void SimpleEQAudioProcessor::setStateInformation (const void* data, int sizeInBy
     if (tree.isValid())
     {
         apvts.replaceState(tree);
-        updateFilters();
+     
+        updateCompressor();
     }
 }
 
@@ -236,14 +280,13 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
 {
     ChainSettings settings;
     
-    settings.lowCutFreq = apvts.getRawParameterValue("lowcut_freq") ->load();
-    settings.highCutFreq = apvts.getRawParameterValue("highcut_freq") ->load();
-    settings.peakFreq = apvts.getRawParameterValue("peak_freq") ->load();
-    settings.peakGainDecibels = apvts.getRawParameterValue("peak_gain") ->load();
-    settings.peakQuality = apvts.getRawParameterValue("peak_quality") ->load();
+    settings.bandsplit_frequency = apvts.getRawParameterValue("bandsplit_frequency") ->load();
     
-    settings.lowCutSlope = static_cast<Slope>(apvts.getRawParameterValue("lowcut_slope") ->load());
-    settings.highCutSlope = static_cast<Slope>(apvts.getRawParameterValue("highcut_slope") ->load());
+    settings.compHighIntensity = apvts.getRawParameterValue("compHighIntensity") ->load();
+    settings.compLowIntensity = apvts.getRawParameterValue("compLowIntensity") ->load();
+    
+    settings.distLowIntensity = apvts.getRawParameterValue("distLowIntensity") ->load();
+    settings.distHighIntensity = apvts.getRawParameterValue("distHighIntensity") ->load();
     
     return settings;
 }
@@ -251,69 +294,61 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
 
 // COEFFICIENT SETTING HELPERS -----------------------------------------------
 
-void SimpleEQAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings)
+// COMPRESSOR ----------
+
+CompressorSettings SimpleEQAudioProcessor::getCompressorSettings(const double intensity){
+    CompressorSettings settings;
+    
+    
+    settings.threshold = intensity * (-30.f);  //
+    settings.ratio = 1.f + intensity * 35.0f;
+    
+    //settings.makeupGain = 1.f - (settings.threshold / settings.ratio) * (1 - (1.0f / settings.ratio));
+
+    //settings.makeupGain = 1.f - 4.0*(settings.threshold / settings.ratio) * (1 - (6.0f / settings.ratio));
+    settings.makeupGain = 1.f + 5.f*(intensity+1.f)*(intensity+1.f);
+    return settings;
+    
+}
+
+
+void SimpleEQAudioProcessor::applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings)
+{
+    compressor.setThreshold(settings.threshold);
+    compressor.setRatio(settings.ratio);
+    
+    gain.setGainDecibels(settings.makeupGain);
+    
+    compressor.setAttack(5.f);
+    compressor.setRelease(150.f);
+}
+
+
+void SimpleEQAudioProcessor::updateCompressor()
 {
     
-    
-    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(),
-                                                                                chainSettings.peakFreq,
-                                                                                chainSettings.peakQuality,
-                                                                                juce::Decibels::decibelsToGain(chainSettings.peakGainDecibels));
-    
-    updateCoefficients(leftChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
-    updateCoefficients(rightChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+    const ChainSettings chainSettings = getChainSettings(apvts);
+    // Define compressor settings for both bands
+    CompressorSettings lowBandSettings = getCompressorSettings(chainSettings.compLowIntensity);
+    CompressorSettings highBandSettings = getCompressorSettings(chainSettings.compHighIntensity);
+
+    // Apply settings to both stereo channels (Compressor + Gain)
+    applyCompressorSettings(leftChain.get<1>().get<1>(), leftChain.get<1>().get<2>(), lowBandSettings);  // Low-band
+    applyCompressorSettings(leftChain.get<2>().get<1>(), leftChain.get<2>().get<2>(), highBandSettings); // High-band
+
+    applyCompressorSettings(rightChain.get<1>().get<1>(), rightChain.get<1>().get<2>(), lowBandSettings); // Low-band
+    applyCompressorSettings(rightChain.get<2>().get<1>(), rightChain.get<2>().get<2>(), highBandSettings); // High-band
 }
+
+
+
+
 
 void SimpleEQAudioProcessor::updateCoefficients(Coefficients& old, const Coefficients& replacements)
 {
     *old = *replacements;
 }
 
-template<typename ChainType, typename CoefficientType> void SimpleEQAudioProcessor::updateCutFilter(ChainType& LowCut,
-                                                                                                    const CoefficientType& cutCoefficients,
-                                                                                                    const Slope& lowCutSlope)
-{
-    LowCut.template setBypassed<0>(true);
-    LowCut.template setBypassed<1>(true);
-    LowCut.template setBypassed<2>(true);
-    LowCut.template setBypassed<3>(true);
-
-    switch(lowCutSlope)
-    {
-
-        case Slope_12:
-            *LowCut.template get<0>().coefficients = *cutCoefficients[0];
-            LowCut.template setBypassed<0>(false);
-        break;
-        case Slope_24:
-            *LowCut.template get<0>().coefficients = *cutCoefficients[0];
-            LowCut.template setBypassed<0>(false);
-            *LowCut.template get<1>().coefficients = *cutCoefficients[1];
-            LowCut.template setBypassed<1>(false);
-
-        break;
-        case Slope_36:
-            *LowCut.template get<0>().coefficients = *cutCoefficients[0];
-            LowCut.template setBypassed<0>(false);
-            *LowCut.template get<1>().coefficients = *cutCoefficients[1];
-            LowCut.template setBypassed<1>(false);
-            *LowCut.template get<2>().coefficients = *cutCoefficients[2];
-            LowCut.template setBypassed<2>(false);
-
-        break;
-        case Slope_48:
-            *LowCut.template get<0>().coefficients = *cutCoefficients[0];
-            LowCut.template setBypassed<0>(false);
-            *LowCut.template get<1>().coefficients = *cutCoefficients[1];
-            LowCut.template setBypassed<1>(false);
-            *LowCut.template get<2>().coefficients = *cutCoefficients[2];
-            LowCut.template setBypassed<2>(false);
-            *LowCut.template get<3>().coefficients = *cutCoefficients[3];
-            LowCut.template setBypassed<3>(false);
-
-        break;
-    }
-}
 
 
 // CREATING PARAMETERS ---------------------------------------------------------
@@ -323,86 +358,33 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lowcut_freq", 1),
-                                                           "LowCut Freq",
-                                                           juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
-                                                           20.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bandsplit_frequency", 1),
+                                                                 "bandsplit_frequency",
+                                                                 juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
+                                                                 750.f));
+    // COMP ----
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("compLowIntensity", 1),
+                                                                 "compLowIntensity",
+                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
+                                                                 0.f));
     
-    // "LowCut Freq" (ID), "LowCut Freq" (UI Name), 20.f (Min), 20000.f (Max), 1.f (Step), 0.25f (Skew factor - controls nonlinear scaling), 20.f (Default value)
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("compHighIntensity", 1),
+                                                                 "compHighIntensity",
+                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
+                                                                 0.f));
     
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("highcut_freq", 1),
-                                                           "HighCut Freq",
-                                                           juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
-                                                           20000.f));
     
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("peak_freq", 1),
-                                                           "Peak Freq",
-                                                           juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f),
-                                                           750.f));
+    // DISTORTION ----
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("distLowIntensity", 1),
+                                                                 "distLowIntensity",
+                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 1.f),
+                                                                 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("distHighIntensity", 1),
+                                                                 "distHighIntensity",
+                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 1.f),
+                                                                 0.f));
     
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("peak_gain", 1),
-                                                           "Peak Gain",
-                                                           juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f),
-                                                           0.f));
-    
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("peak_quality", 1),
-                                                           "Peak Quality",
-                                                           juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f),
-                                                           1.f));
-   
-   //construct a string array of the different cut steepnesses (here 4 options)
-    juce::StringArray stringArray;
-    for (int i = 0; i<4; ++i)
-    {
-        juce::String str;
-        str << (12 + i*12);
-        str << " db/oct";
-        stringArray.add(str);
-    }
-    
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("lowcut_slope", 1),"LowCut Slope", stringArray, 0));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("highcut_slope", 1),"HighCut Slope", stringArray, 0));
-
     return layout;
-}
-
-
-
-
-void SimpleEQAudioProcessor::updateHighCut(const ChainSettings& chainSettings){
-    
-    auto cutCoefficientsHighcut = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq,
-                                                                                                       getSampleRate(),
-                                                                                                       2 * (chainSettings.highCutSlope + 1));
-    auto& leftHighCut = leftChain.get<ChainPositions::HighCut>();
-    auto& rightHighCut = rightChain.get<ChainPositions::HighCut>();
-    
-    updateCutFilter(leftHighCut, cutCoefficientsHighcut, chainSettings.highCutSlope);
-    updateCutFilter(rightHighCut, cutCoefficientsHighcut, chainSettings.highCutSlope);
-}
-
-
-void SimpleEQAudioProcessor::updateLowCut(const ChainSettings& chainSettings){
-    
-    auto cutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq,
-                                                                                getSampleRate(),
-                                                                                2 * (chainSettings.lowCutSlope + 1));
-    auto& leftLowCut = leftChain.get<ChainPositions::LowCut>();
-    auto& rightLowCut = rightChain.get<ChainPositions::LowCut>();
-    
-    updateCutFilter(leftLowCut, cutCoefficients, chainSettings.lowCutSlope);
-    updateCutFilter(rightLowCut, cutCoefficients, chainSettings.lowCutSlope);
-    
-}
-
-void SimpleEQAudioProcessor::updateFilters(){
-    
-    const ChainSettings chainSettings = getChainSettings(apvts);
-
-    updatePeakFilter(chainSettings);
-    updateHighCut(chainSettings);
-    updateLowCut(chainSettings);
-
 }
 
 
