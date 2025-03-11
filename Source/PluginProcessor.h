@@ -35,6 +35,11 @@ struct CompressorSettings {
     float makeupGain;
 };
 
+struct tapeDistortionSettings {
+    float drive;
+    float c;
+};
+
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
 
@@ -91,6 +96,8 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     
     
     
+    
+    
     private:
     
     // Type Aliases and Processor Chains
@@ -140,6 +147,9 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     CompressorSettings getCompressorSettings(const double intensity);
     void applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings);
     void updateCompressor();
+    
+    float tapeDistortionSample(float x, float y_old, float drive, float c);
+    tapeDistortionSettings getDistortionSettings(const double intensity);
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)

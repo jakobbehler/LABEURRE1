@@ -187,48 +187,126 @@ bool SimpleEQAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 //    rightChain.process(rightContext);
 //
 //}
+//void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+//{
+//    juce::ScopedNoDenormals noDenormals;
+//
+//    // 🔥 Ensure compressor updates in real-time
+//    updateCompressor();
+//    
+//    auto totalNumInputChannels  = getTotalNumInputChannels();
+//    auto totalNumOutputChannels = getTotalNumOutputChannels();
+//
+//    
+//    float distHigh = apvts.getRawParameterValue("distHighIntensity")->load();
+//    float distLow = apvts.getRawParameterValue("distLowIntensity")->load();
+//    
+//    float c_high = getDistortionSettings(distHigh).c;
+//    float drive_high = getDistortionSettings(distHigh).drive;
+//    
+//    float c_low = getDistortionSettings(distLow).c
+//    float drive_low = getDistortionSettings(distLow).drive;
+//    
+//    
+//
+//    
+//    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+//        buffer.clear(i, 0, buffer.getNumSamples());
+//
+//    float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
+//    leftChain.get<0>().setCutoffFrequency(crossoverFreq);
+//    rightChain.get<0>().setCutoffFrequency(crossoverFreq);
+//
+//    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+//    {
+//        auto* channelData = buffer.getWritePointer(channel);
+//        auto& chain = (channel == 0) ? leftChain : rightChain;
+//
+//        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+//        {
+//            float inputSample = channelData[sample];
+//
+//            float lowSample, highSample;
+//            chain.get<0>().processSample(channel, inputSample, lowSample, highSample);
+//
+//            // ✅ Apply
+//            lowSample = chain.get<1>().get<1>().processSample(channel, lowSample);
+//            highSample = chain.get<2>().get<1>().processSample(channel, highSample);
+//            
+//            // ✅ Apply Gain (Makeup Compensation)
+//            lowSample = chain.get<1>().get<2>().processSample(lowSample);
+//            highSample = chain.get<2>().get<2>().processSample(highSample);
+//
+//            channelData[sample] = lowSample + highSample;
+//        }
+//    }
+//}
+
 void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
 
-    // 🔥 Ensure compressor updates in real-time
+    // 🔥 Update compressor once per block
     updateCompressor();
     
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+    // Get distortion parameters for both bands
+    float distHigh = apvts.getRawParameterValue("distHighIntensity")->load();
+    float distLow = apvts.getRawParameterValue("distLowIntensity")->load();
+
+    tapeDistortionSettings highSettings = getDistortionSettings(distHigh);
+    tapeDistortionSettings lowSettings = getDistortionSettings(distLow);
+
+    // Ensure the extra output channels are cleared
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
+    // Get real-time crossover frequency
     float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
     leftChain.get<0>().setCutoffFrequency(crossoverFreq);
     rightChain.get<0>().setCutoffFrequency(crossoverFreq);
 
+    // Process each channel independently
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
         auto* channelData = buffer.getWritePointer(channel);
         auto& chain = (channel == 0) ? leftChain : rightChain;
 
+        // Store previous samples for hysteresis feedback
+        float y_old_low = 0.f;
+        float y_old_high = 0.f;
+
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
             float inputSample = channelData[sample];
 
+            // Split signal into low and high frequency bands
             float lowSample, highSample;
             chain.get<0>().processSample(channel, inputSample, lowSample, highSample);
 
-            // ✅ Apply
+            // 🎸 Apply tape distortion
+            lowSample = tapeDistortionSample(lowSample, y_old_low, lowSettings.drive, lowSettings.c);
+            highSample = tapeDistortionSample(highSample, y_old_high, highSettings.drive, highSettings.c);
+
+            // Store previous output for hysteresis feedback
+            y_old_low = lowSample;
+            y_old_high = highSample;
+
+            // 🎛 Apply compression to each band
             lowSample = chain.get<1>().get<1>().processSample(channel, lowSample);
             highSample = chain.get<2>().get<1>().processSample(channel, highSample);
-            
-            // ✅ Apply Gain (Makeup Compensation)
+
+            // 🔊 Apply Gain (Makeup Compensation)
             lowSample = chain.get<1>().get<2>().processSample(lowSample);
             highSample = chain.get<2>().get<2>().processSample(highSample);
 
+            // 🎚 Sum processed bands
             channelData[sample] = lowSample + highSample;
         }
     }
 }
-
 
 
 
@@ -387,6 +465,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
     return layout;
 }
 
+
+
+float SimpleEQAudioProcessor::tapeDistortionSample(float x, float y_old, float drive, float c)
+{
+    // Apply drive (saturation amount) and add hysteresis feedback
+    float input_signal = drive * x + c * y_old;
+
+    // Nonlinear saturation using tanh()
+    return std::tanh(input_signal) + 0.2f * std::pow(input_signal, 3);
+}
+
+tapeDistortionSettings SimpleEQAudioProcessor::getDistortionSettings(const double intensity){
+    
+    tapeDistortionSettings settings;
+    settings.c = intensity;
+    settings.drive = 1.f+ intensity * 0.5f;
+    
+    return settings;
+}
 
 
 //==============================================================================
