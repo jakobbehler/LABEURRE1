@@ -121,18 +121,13 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
         Crossover, // Band-splitter
         LowBandChain,
         HighBandChain
+        
     >;
 
    
     MultiBandCompressorChain leftChain, rightChain;
     
-    enum ChainPositions
-    {
-        LowCut,
-        Peak,
-        HighCut
-    };
-    
+  
     void updatePeakFilter(const ChainSettings& chainSettings);
     
     //datatype of the IIR filter coeffs
