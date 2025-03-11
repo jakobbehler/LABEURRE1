@@ -469,17 +469,26 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
 
 float SimpleEQAudioProcessor::tapeDistortionSample(float x, float y_old, float drive, float c)
 {
-    // Add hysteresis feedback
+    // Compute signal envelope (RMS-based)
+    static float envelope = 0.0f;
+    float alpha = 0.01f; // Smoothing factor (smaller = smoother response)
+    envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
+
+    // Apply volume-dependent gain scaling (higher volume = more saturation)
+    float dynamicDrive = drive * (1.0f + 0.5f * envelope);
+
+    // Add hysteresis feedback (can be tuned)
     float input_signal = x + c * y_old;
 
     // Apply soft asymmetric saturation for a warmer tone
-    float saturated = std::tanh(drive * input_signal) * (1.2f - 0.2f * std::fabs(input_signal));
+    float saturated = std::tanh(dynamicDrive * input_signal) * (1.2f - 0.2f * std::fabs(input_signal));
 
     // Introduce mild even harmonics (tube-like behavior)
     float soft_clip = saturated + 0.5f * saturated * saturated * saturated;
 
     return soft_clip;
 }
+
 
 tapeDistortionSettings SimpleEQAudioProcessor::getDistortionSettings(const double intensity){
     
