@@ -463,17 +463,16 @@ float SimpleEQAudioProcessor::distortionWarm(float x, float y_old, float drive, 
     float dynamicDrive = drive * (1.0f + 0.5f * envelope);
 
     // Apply soft asymmetric saturation for a warmer tone
-    float saturated = std::tanh(dynamicDrive * x) * (1.2f - 0.2f * std::fabs(x));
+    float saturated = std::tanh(dynamicDrive * x * x) * (1.2f - 0.2f * std::fabs(x));
 
-    // Introduce mild even harmonics (tube-like behavior)
-    float soft_clip = saturated + 0.5f * saturated * saturated;
-
+    
+    float saturated2 = std::atan(drive * saturated* saturated* saturated);
     // Introduce Phase Fluttering (small variations)
 //    float flutter_intensity = 0.002f + drive * 0.005f;
 //    float phase_jitter = flutter_intensity * ((rand() / (float)RAND_MAX) - 0.5f);
 //    soft_clip += phase_jitter;
 
-    return soft_clip;
+    return saturated2;
 }
 
 
