@@ -417,62 +417,56 @@ float SimpleEQAudioProcessor::distortionSample(float x, float y_old, float drive
     switch (distType)
     {
         case 0:
-            return distortionCrush(x, y_old, drive, c);
-        case 1:
             return distortionWarm(x, y_old, drive, c);
+        case 1:
+            return distortionCrush(x, y_old, drive, c);
         default:
             return x;
     }
 }
 
+float SimpleEQAudioProcessor::asymmetricSoftClip(float x, float posThreshold, float negThreshold)
+{
+    if (x > posThreshold) return posThreshold - (x - posThreshold) / (1 + (x - posThreshold));
+    if (x < negThreshold) return negThreshold - (x - negThreshold) / (1 + (x - negThreshold));
+    return x;
+}
 
 
 float SimpleEQAudioProcessor::distortionCrush(float x, float y_old, float drive, float c)
 {
     // Compute signal envelope (RMS-based)
-    static float envelope = 0.0f;
-    float alpha = 0.05f; // Smoothing factor (smaller = smoother response)
-    envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
+//    static float envelope = 0.0f;
+//    float alpha = 0.05f; // Smoothing factor (smaller = smoother response)
+//    envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
 
     // Apply volume-dependent gain scaling (higher volume = more saturation)
-    float dynamicDrive = drive * (1.0f + 0.5f * envelope);
+    //float dynamicDrive = drive * (1.0f + 0.5f * envelope);
 
-    // Apply soft asymmetric saturation for a warmer tone
-    float saturated = std::tanh(dynamicDrive * x) * (1.2f - 0.2f * std::fabs(x));
+    return std::pow(drive, 0.5f) * x / (1.0f + std::abs(drive * x*x*x));
+    
 
-    // Introduce mild even harmonics (tube-like behavior)
-    float soft_clip = saturated + 0.5f * saturated * saturated * saturated;
-
-    // Introduce Phase Fluttering (small variations)
-//    float flutter_intensity = 0.002f + drive * 0.005f;
-//    float phase_jitter = flutter_intensity * ((rand() / (float)RAND_MAX) - 0.5f);
-//    soft_clip += phase_jitter;
-
-    return soft_clip;
 }
 
 
 float SimpleEQAudioProcessor::distortionWarm(float x, float y_old, float drive, float c)
 {
-    // Compute signal envelope (RMS-based)
-    static float envelope = 0.0f;
+//    // Compute signal envelope (RMS-based)
+       static float envelope = 0.0f;
     float alpha = 0.001f; // Smoothing factor (smaller = smoother response)
     envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
 
     // Apply volume-dependent gain scaling (higher volume = more saturation)
     float dynamicDrive = drive * (1.0f + 0.5f * envelope);
-
-    // Apply soft asymmetric saturation for a warmer tone
-    float saturated = std::tanh(dynamicDrive * x * x) * (1.2f - 0.2f * std::fabs(x));
-
     
-    float saturated2 = std::atan(drive * saturated* saturated* saturated);
-    // Introduce Phase Fluttering (small variations)
-//    float flutter_intensity = 0.002f + drive * 0.005f;
-//    float phase_jitter = flutter_intensity * ((rand() / (float)RAND_MAX) - 0.5f);
-//    soft_clip += phase_jitter;
+    float scale = 1.0f / (1.0f + (0.3f) * (drive - 1.0f));
+    // Apply soft asymmetric saturation for a warmer tone
+    float saturated =scale *std::tanh(dynamicDrive * x) ; //* (1.2f - 0.2f * std::fabs(x));
 
-    return saturated2;
+
+
+
+    return saturated;
 }
 
 
