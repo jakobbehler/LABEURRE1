@@ -105,6 +105,8 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     leftChain.prepare(spec);
     rightChain.prepare(spec);
     
+   
+    
     float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
 
     // Set crossover filter cutoff
@@ -112,6 +114,9 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     rightChain.get<0>().setCutoffFrequency(crossoverFreq);
     
     updateCompressor();
+    
+    //*lowPassFilter.state = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 5000.0f);
+    
 }
 
 
@@ -153,100 +158,11 @@ bool SimpleEQAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 // PROCESS BLOCK
 //==============================================================================
 
-//
-//void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
-//{
-//    juce::ScopedNoDenormals noDenormals;
-//    auto totalNumInputChannels  = getTotalNumInputChannels();
-//    auto totalNumOutputChannels = getTotalNumOutputChannels();
-//
-//    // In case we have more outputs than inputs, this code clears any output
-//    // channels that didn't contain input data, (because these aren't
-//    // guaranteed to be empty - they may contain garbage).
-//    // This is here to avoid people getting screaming feedback
-//    // when they first compile a plugin, but obviously you don't need to keep
-//    // this code if your algorithm always overwrites all the output channels.
-//    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-//        buffer.clear (i, 0, buffer.getNumSamples());
-//
-//
-//
-//    updateCompressor();
-//
-//    // creating context block by defining channels ----------------------------
-//
-//    juce::dsp::AudioBlock<float> block(buffer);
-//
-//    auto leftBlock = block.getSingleChannelBlock(0);
-//    auto rightBlock = block.getSingleChannelBlock(1);
-//
-//    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-//    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-//
-//    leftChain.process(leftContext);
-//    rightChain.process(rightContext);
-//
-//}
-//void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
-//{
-//    juce::ScopedNoDenormals noDenormals;
-//
-//    // 🔥 Ensure compressor updates in real-time
-//    updateCompressor();
-//    
-//    auto totalNumInputChannels  = getTotalNumInputChannels();
-//    auto totalNumOutputChannels = getTotalNumOutputChannels();
-//
-//    
-//    float distHigh = apvts.getRawParameterValue("distHighIntensity")->load();
-//    float distLow = apvts.getRawParameterValue("distLowIntensity")->load();
-//    
-//    float c_high = getDistortionSettings(distHigh).c;
-//    float drive_high = getDistortionSettings(distHigh).drive;
-//    
-//    float c_low = getDistortionSettings(distLow).c
-//    float drive_low = getDistortionSettings(distLow).drive;
-//    
-//    
-//
-//    
-//    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-//        buffer.clear(i, 0, buffer.getNumSamples());
-//
-//    float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
-//    leftChain.get<0>().setCutoffFrequency(crossoverFreq);
-//    rightChain.get<0>().setCutoffFrequency(crossoverFreq);
-//
-//    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-//    {
-//        auto* channelData = buffer.getWritePointer(channel);
-//        auto& chain = (channel == 0) ? leftChain : rightChain;
-//
-//        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-//        {
-//            float inputSample = channelData[sample];
-//
-//            float lowSample, highSample;
-//            chain.get<0>().processSample(channel, inputSample, lowSample, highSample);
-//
-//            // ✅ Apply
-//            lowSample = chain.get<1>().get<1>().processSample(channel, lowSample);
-//            highSample = chain.get<2>().get<1>().processSample(channel, highSample);
-//            
-//            // ✅ Apply Gain (Makeup Compensation)
-//            lowSample = chain.get<1>().get<2>().processSample(lowSample);
-//            highSample = chain.get<2>().get<2>().processSample(highSample);
-//
-//            channelData[sample] = lowSample + highSample;
-//        }
-//    }
-//}
-
 void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
 
-    // 🔥 Update compressor once per block
+
     updateCompressor();
     
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -256,8 +172,8 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     float distHigh = apvts.getRawParameterValue("distHighIntensity")->load();
     float distLow = apvts.getRawParameterValue("distLowIntensity")->load();
 
-    tapeDistortionSettings highSettings = getDistortionSettings(distHigh);
-    tapeDistortionSettings lowSettings = getDistortionSettings(distLow);
+    distortionSettings highSettings = getDistortionSettings(distHigh);
+    distortionSettings lowSettings = getDistortionSettings(distLow);
 
     // Ensure the extra output channels are cleared
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
@@ -287,8 +203,8 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             chain.get<0>().processSample(channel, inputSample, lowSample, highSample);
 
             // 🎸 Apply tape distortion
-            lowSample = tapeDistortionSample(lowSample, y_old_low, lowSettings.drive, lowSettings.c);
-            highSample = tapeDistortionSample(highSample, y_old_high, highSettings.drive, highSettings.c);
+            lowSample = distortionSample(lowSample, y_old_low, lowSettings.drive, lowSettings.c);
+            highSample = distortionSample(highSample, y_old_high, highSettings.drive, highSettings.c);
 
             // Store previous output for hysteresis feedback
             y_old_low = lowSample;
@@ -366,6 +282,10 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
     settings.distLowIntensity = apvts.getRawParameterValue("distLowIntensity") ->load();
     settings.distHighIntensity = apvts.getRawParameterValue("distHighIntensity") ->load();
     
+    settings.compressorSpeed = static_cast<int>(apvts.getRawParameterValue("compressorSpeed")->load());
+    settings.distortionType = static_cast<int>(apvts.getRawParameterValue("distortionType")->load());
+
+    
     return settings;
 }
 
@@ -375,6 +295,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
 // COMPRESSOR ----------
 
 CompressorSettings SimpleEQAudioProcessor::getCompressorSettings(const double intensity){
+    
     CompressorSettings settings;
     
     
@@ -382,23 +303,30 @@ CompressorSettings SimpleEQAudioProcessor::getCompressorSettings(const double in
     settings.ratio = 1.f + intensity * 35.0f;
     
     //settings.makeupGain = 1.f - (settings.threshold / settings.ratio) * (1 - (1.0f / settings.ratio));
-
+    
     //settings.makeupGain = 1.f - 4.0*(settings.threshold / settings.ratio) * (1 - (6.0f / settings.ratio));
     settings.makeupGain = 1.f + 5.f*(intensity+1.f)*(intensity+1.f);
+    
     return settings;
     
 }
 
 
-void SimpleEQAudioProcessor::applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings)
+void SimpleEQAudioProcessor::applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings, int compressorSpeed)
 {
     compressor.setThreshold(settings.threshold);
     compressor.setRatio(settings.ratio);
     
     gain.setGainDecibels(settings.makeupGain);
     
-    compressor.setAttack(5.f);
-    compressor.setRelease(150.f);
+    float fastestAttack = 1000.0f / getSampleRate();
+    // Attack & Release settings based on compressor speed (0 = Fast, 1 = Slow)
+    const std::array<float, 2> attackTimes = {fastestAttack, 100.0f};  // ms
+    const std::array<float, 2> releaseTimes = {50.0f, 200.0f}; // ms
+
+    compressor.setAttack(attackTimes[compressorSpeed]);
+    compressor.setRelease(releaseTimes[compressorSpeed]);
+    
 }
 
 
@@ -409,13 +337,15 @@ void SimpleEQAudioProcessor::updateCompressor()
     // Define compressor settings for both bands
     CompressorSettings lowBandSettings = getCompressorSettings(chainSettings.compLowIntensity);
     CompressorSettings highBandSettings = getCompressorSettings(chainSettings.compHighIntensity);
+    
+    const int compSpeed = chainSettings.compressorSpeed;
 
     // Apply settings to both stereo channels (Compressor + Gain)
-    applyCompressorSettings(leftChain.get<1>().get<1>(), leftChain.get<1>().get<2>(), lowBandSettings);  // Low-band
-    applyCompressorSettings(leftChain.get<2>().get<1>(), leftChain.get<2>().get<2>(), highBandSettings); // High-band
+    applyCompressorSettings(leftChain.get<1>().get<1>(), leftChain.get<1>().get<2>(), lowBandSettings, compSpeed);  // Low-band
+    applyCompressorSettings(leftChain.get<2>().get<1>(), leftChain.get<2>().get<2>(), highBandSettings, compSpeed); // High-band
 
-    applyCompressorSettings(rightChain.get<1>().get<1>(), rightChain.get<1>().get<2>(), lowBandSettings); // Low-band
-    applyCompressorSettings(rightChain.get<2>().get<1>(), rightChain.get<2>().get<2>(), highBandSettings); // High-band
+    applyCompressorSettings(rightChain.get<1>().get<1>(), rightChain.get<1>().get<2>(), lowBandSettings, compSpeed); // Low-band
+    applyCompressorSettings(rightChain.get<2>().get<1>(), rightChain.get<2>().get<2>(), highBandSettings, compSpeed); // High-band
 }
 
 
@@ -451,6 +381,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
                                                                  juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
                                                                  0.f));
     
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("compressorSpeed", 1),
+                                                            "Compressor Speed",
+                                                            juce::StringArray{"Fast", "Slow"}, // Choices
+                                                            0 ));
+    
+                                               
     
     // DISTORTION ----
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("distLowIntensity", 1),
@@ -462,39 +398,93 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
                                                                  juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 1.f),
                                                                  0.f));
     
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("distortionType", 1),
+                                                            "Compressor Speed",
+                                                            juce::StringArray{"warm", "crush"}, // Choices
+                                                            0 ));
+    
+    
     return layout;
 }
 
 
 
-float SimpleEQAudioProcessor::tapeDistortionSample(float x, float y_old, float drive, float c)
+float SimpleEQAudioProcessor::distortionSample(float x, float y_old, float drive, float c)
+{
+    const ChainSettings chainSettings = getChainSettings(apvts);
+    const int distType = chainSettings.distortionType; // Ensure this exists in ChainSettings
+
+    switch (distType)
+    {
+        case 0:
+            return distortionCrush(x, y_old, drive, c);
+        case 1:
+            return distortionWarm(x, y_old, drive, c);
+        default:
+            return x;
+    }
+}
+
+
+
+float SimpleEQAudioProcessor::distortionCrush(float x, float y_old, float drive, float c)
 {
     // Compute signal envelope (RMS-based)
     static float envelope = 0.0f;
-    float alpha = 0.01f; // Smoothing factor (smaller = smoother response)
+    float alpha = 0.05f; // Smoothing factor (smaller = smoother response)
     envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
 
     // Apply volume-dependent gain scaling (higher volume = more saturation)
     float dynamicDrive = drive * (1.0f + 0.5f * envelope);
 
-    // Add hysteresis feedback (can be tuned)
-    float input_signal = x + c * y_old;
-
     // Apply soft asymmetric saturation for a warmer tone
-    float saturated = std::tanh(dynamicDrive * input_signal) * (1.2f - 0.2f * std::fabs(input_signal));
+    float saturated = std::tanh(dynamicDrive * x) * (1.2f - 0.2f * std::fabs(x));
 
     // Introduce mild even harmonics (tube-like behavior)
     float soft_clip = saturated + 0.5f * saturated * saturated * saturated;
+
+    // Introduce Phase Fluttering (small variations)
+//    float flutter_intensity = 0.002f + drive * 0.005f;
+//    float phase_jitter = flutter_intensity * ((rand() / (float)RAND_MAX) - 0.5f);
+//    soft_clip += phase_jitter;
 
     return soft_clip;
 }
 
 
-tapeDistortionSettings SimpleEQAudioProcessor::getDistortionSettings(const double intensity){
+float SimpleEQAudioProcessor::distortionWarm(float x, float y_old, float drive, float c)
+{
+    // Compute signal envelope (RMS-based)
+    static float envelope = 0.0f;
+    float alpha = 0.001f; // Smoothing factor (smaller = smoother response)
+    envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
+
+    // Apply volume-dependent gain scaling (higher volume = more saturation)
+    float dynamicDrive = drive * (1.0f + 0.5f * envelope);
+
+    // Apply soft asymmetric saturation for a warmer tone
+    float saturated = std::tanh(dynamicDrive * x) * (1.2f - 0.2f * std::fabs(x));
+
+    // Introduce mild even harmonics (tube-like behavior)
+    float soft_clip = saturated + 0.5f * saturated * saturated;
+
+    // Introduce Phase Fluttering (small variations)
+//    float flutter_intensity = 0.002f + drive * 0.005f;
+//    float phase_jitter = flutter_intensity * ((rand() / (float)RAND_MAX) - 0.5f);
+//    soft_clip += phase_jitter;
+
+    return soft_clip;
+}
+
+
+
+
+
+distortionSettings SimpleEQAudioProcessor::getDistortionSettings(const double intensity){
     
-    tapeDistortionSettings settings;
+    distortionSettings settings;
     settings.c = 0.f;//intensity*0.8f;
-    settings.drive = 1.f + 9.f*intensity;
+    settings.drive = 1.f + 6.f*intensity;
     
     return settings;
 }

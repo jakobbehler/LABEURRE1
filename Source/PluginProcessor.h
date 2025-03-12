@@ -12,22 +12,17 @@
 
 // Extract Parameters
 
-enum Slope
-{
-    Slope_12,
-    Slope_24,
-    Slope_36,
-    Slope_48
-};
 
 // A structure containing all the parameters of the plugin
 struct ChainSettings
 {
     float bandsplit_frequency {0},  compLowIntensity {0}, compHighIntensity {0}, distLowIntensity {0}, distHighIntensity {0};
+    int compressorSpeed {0}, distortionType {0} ;
     //float lowCutFreq{0}, highCutFreq{0};
     
     //Slope lowCutSlope{Slope::Slope_12},  highCutSlope{Slope::Slope_12};
 };
+
 
 struct CompressorSettings {
     float threshold;
@@ -35,7 +30,7 @@ struct CompressorSettings {
     float makeupGain;
 };
 
-struct tapeDistortionSettings {
+struct distortionSettings {
     float drive;
     float c;
 };
@@ -110,6 +105,7 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     // Crossover filter (Linkwitz-Riley)
     using Crossover = juce::dsp::LinkwitzRileyFilter<float>;
 
+    juce::dsp::IIR::Filter<float> lowPassFilter;
     // Low-band chain: Low-pass + Compressor
     using LowBandChain = juce::dsp::ProcessorChain<Filter, Compressor, Gain>;
 
@@ -128,23 +124,28 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     MultiBandCompressorChain leftChain, rightChain;
     
   
-    void updatePeakFilter(const ChainSettings& chainSettings);
+    //void updatePeakFilter(const ChainSettings& chainSettings);
     
     //datatype of the IIR filter coeffs
     using Coefficients = Filter::CoefficientsPtr;
     
     // parameters update funtions
     static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
-    template<typename ChainType, typename CoefficientType> void updateCutFilter(ChainType& leftLowCut,
-                                                                                const CoefficientType& cutCoefficients,
-                                                                                const Slope& lowCutSlope);
+    
+    // COMPRESSOR METHODS -----------------------------
     
     CompressorSettings getCompressorSettings(const double intensity);
-    void applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings);
+    void applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings, int compressorSpeed);
     void updateCompressor();
     
-    float tapeDistortionSample(float x, float y_old, float drive, float c);
-    tapeDistortionSettings getDistortionSettings(const double intensity);
+    // DISTORTION METHODS -----------------------------
+    
+    float distortionSample(float x, float y_old, float drive, float c);
+    
+    float distortionWarm(float x, float y_old, float drive, float c);
+    float distortionCrush(float x, float y_old, float drive, float c);
+    
+    distortionSettings getDistortionSettings(const double intensity);
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
