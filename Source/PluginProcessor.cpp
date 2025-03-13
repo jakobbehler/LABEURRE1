@@ -305,7 +305,7 @@ CompressorSettings SimpleEQAudioProcessor::getCompressorSettings(const double in
     //settings.makeupGain = 1.f - (settings.threshold / settings.ratio) * (1 - (1.0f / settings.ratio));
     
     //settings.makeupGain = 1.f - 4.0*(settings.threshold / settings.ratio) * (1 - (6.0f / settings.ratio));
-    settings.makeupGain = 1.f + 5.f*(intensity+1.f)*(intensity+1.f);
+    settings.makeupGain = 1.f + 5.7f*(intensity+1.f)*(intensity+1.f);
     
     return settings;
     
@@ -391,11 +391,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
     // DISTORTION ----
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("distLowIntensity", 1),
                                                                  "distLowIntensity",
-                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 1.f),
+                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
                                                                  0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("distHighIntensity", 1),
                                                                  "distHighIntensity",
-                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 1.f),
+                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
                                                                  0.f));
     
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("distortionType", 1),
@@ -433,26 +433,25 @@ float SimpleEQAudioProcessor::asymmetricSoftClip(float x, float posThreshold, fl
 }
 
 
-float SimpleEQAudioProcessor::distortionCrush(float x, float y_old, float drive, float c)
-{
-    // Compute signal envelope (RMS-based)
-//    static float envelope = 0.0f;
-//    float alpha = 0.05f; // Smoothing factor (smaller = smoother response)
-//    envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
-
-    // Apply volume-dependent gain scaling (higher volume = more saturation)
-    //float dynamicDrive = drive * (1.0f + 0.5f * envelope);
-
-    return std::pow(drive, 0.5f) * x / (1.0f + std::abs(drive * x*x*x));
-    
-
-}
-
 
 float SimpleEQAudioProcessor::distortionWarm(float x, float y_old, float drive, float c)
 {
+ 
+    // Soft clipping function (prevents hard digital clipping)
+    float softClip = std::tanh(drive * x);
+
+    // Harmonic Enhancement: Adds gentle tube-style warmth
+    softClip += 0.15f * softClip * softClip * softClip;
+    
+    float scale = 1.0f / (1.0f + (0.295f) * (drive - 1.0f));
+    return scale * softClip;
+}
+
+
+float SimpleEQAudioProcessor::distortionCrush(float x, float y_old, float drive, float c)
+{
 //    // Compute signal envelope (RMS-based)
-       static float envelope = 0.0f;
+    static float envelope = 0.0f;
     float alpha = 0.001f; // Smoothing factor (smaller = smoother response)
     envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
 
@@ -461,10 +460,11 @@ float SimpleEQAudioProcessor::distortionWarm(float x, float y_old, float drive, 
     
     float scale = 1.0f / (1.0f + (0.3f) * (drive - 1.0f));
     // Apply soft asymmetric saturation for a warmer tone
-    float saturated =scale *std::tanh(dynamicDrive * x) ; //* (1.2f - 0.2f * std::fabs(x));
-
-
-
+    
+    float warm = distortionWarm( x, y_old,  dynamicDrive,  c);
+    
+    float saturated =scale *std::tanh(dynamicDrive * warm);
+    
 
     return saturated;
 }
@@ -476,7 +476,7 @@ float SimpleEQAudioProcessor::distortionWarm(float x, float y_old, float drive, 
 distortionSettings SimpleEQAudioProcessor::getDistortionSettings(const double intensity){
     
     distortionSettings settings;
-    settings.c = 0.f;//intensity*0.8f;
+    settings.c = 0.2;
     settings.drive = 1.f + 6.f*intensity;
     
     return settings;
