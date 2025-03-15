@@ -12,6 +12,9 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="GRE2kk" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
+    <FILE id="fnmvkp" name="QuarterCircle.cpp" compile="1" resource="0"
+          file="Source/QuarterCircle.cpp"/>
+    <FILE id="Jzg0vl" name="QuarterCircle.h" compile="0" resource="0" file="Source/QuarterCircle.h"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>

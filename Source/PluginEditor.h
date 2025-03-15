@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "QuarterCircle.h"
 
 //struct CustomRotarySlider : juce::Slider
 //{
@@ -22,6 +23,9 @@
 //==============================================================================
 /**
 */
+
+
+
 class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
@@ -35,13 +39,12 @@ public:
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
+    
     SimpleEQAudioProcessor& audioProcessor;
+    QuarterCircle quarterCircle;  // Add quarter-circle component
 
-    
-    //CustomRotarySlider peakFreqSlider, peakGainSlider, peakQualitySlider, lowCutFreqSlides, highCutFreqSlider;
-    
-    //std::vector<juce::Component*> getComps();
-    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)
 };
+
+
