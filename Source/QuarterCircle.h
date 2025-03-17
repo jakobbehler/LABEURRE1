@@ -12,6 +12,7 @@ public:
     void resized() override;
     void mouseDrag(const juce::MouseEvent& event) override; // Allow radius change
     float getRadius() const;
+  
     
 private:
     float radius; // Store the radius of the quarter-circle

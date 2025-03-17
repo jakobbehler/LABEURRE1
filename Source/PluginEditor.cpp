@@ -43,8 +43,8 @@ void SimpleEQAudioProcessorEditor::resized()
     int quarterCircleSize = 300; // Size of the quarter-circle component
     int xPosition = (getWidth() - quarterCircleSize) / 2;  // Center horizontally
     int yPosition = (getHeight() - quarterCircleSize) / 2; // Center vertically
-
-        quarterCircle.setBounds(xPosition, yPosition, quarterCircleSize, quarterCircleSize);
+    
+    quarterCircle.setBounds(xPosition, yPosition, quarterCircleSize, quarterCircleSize);
 
 }
 
