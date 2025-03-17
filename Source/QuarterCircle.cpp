@@ -34,8 +34,13 @@ void QuarterCircle::paint(juce::Graphics& g)
 
     path.lineTo(center);  // Close the wedge by connecting back to the center
     path.closeSubPath();
+    
 
-    g.fillPath(path);
+    g.fillPath(path);  // Normal rendering without blur
+    g.setColour(isHovered ? juce::Colours::white : juce::Colours::black);
+  
+    g.drawText("Radius: " + juce::String(radius), getLocalBounds(),
+               juce::Justification::topRight);
 }
 
 
@@ -43,11 +48,12 @@ void QuarterCircle::paint(juce::Graphics& g)
 // Handle mouse drag to update the radius
 void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
 {
-    juce::Point<float> center(getWidth() / 2.0f, getHeight());
+    juce::Point<float> center(getWidth(), 0.f);
     //juce::Point<float> center(getWidth(), 0.f);
     
+
     float newRadius = event.position.getDistanceFrom(center);
-    radius = juce::jlimit(50.0f, 300.0f, newRadius); // Constrain radius
+    radius = juce::jlimit(100.0f, 300.0f, newRadius); // Constrain radius
     repaint();
 }
 
@@ -64,3 +70,17 @@ float QuarterCircle::getRadius() const
 {
     return radius;
 }
+
+
+void QuarterCircle::mouseEnter(const juce::MouseEvent& event)
+    {
+        isHovered = true;
+        repaint();
+    }
+
+    void QuarterCircle::mouseExit(const juce::MouseEvent& event)
+    {
+        isHovered = false;
+        repaint();
+    }
+
