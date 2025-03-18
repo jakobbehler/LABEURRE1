@@ -46,7 +46,7 @@ void SimpleEQAudioProcessorEditor::resized()
     
     quarterCircle.setBounds(xPosition, yPosition, quarterCircleSize, quarterCircleSize);
     
-    float radius = quarterCircle.getRadius();
+    //float radius = quarterCircle.getRadius();
     
 }
 
