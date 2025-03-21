@@ -28,6 +28,8 @@ private:
     float smallestRadius;
     float biggestRadius;
     int rotation;
+    juce::Point<float> centerPoint;
+    
     
     
     

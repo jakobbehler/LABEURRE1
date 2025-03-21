@@ -18,53 +18,101 @@ QuarterCircle::~QuarterCircle()
 {
 }
 
+
 void QuarterCircle::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::white);  // Background color
-    g.setColour(juce::Colours::black);  // Circle color
+    // Background
+    g.fillAll(juce::Colours::white);
+    g.setColour(juce::Colours::black);
 
-    float diameter = radius * 2.0f;
+    const float diameter = radius * 2.0f;
+    const float widthF = static_cast<float>(getWidth());
+    const float heightF = static_cast<float>(getHeight());
+    
+    float startArc = 0.f;
+    float endArc = 0.f;
+    float x = 0.0f;
+    float y = 0.0f;
+    juce::Point<float> center;
 
-    // Adjust bounding rectangle to keep center at (getWidth(), 0)
-    float x = getWidth() - radius;  // Center horizontally stays at getWidth()
-    float y = -radius;              // Center vertically stays at 0
+    // Set position based on rotation
+    switch (rotation)
+    {
+        case 0: // top-right
+            x = -radius;
+            y = heightF - radius;
+            center = juce::Point<float>(0.0f, heightF);
+            
+            startArc = 0.f;
+            endArc = juce::MathConstants<float>::halfPi;
+            
+            break;
 
-    juce::Point<float> center(getWidth(), 0.0f);
+        case 1: // bottom-right
+            x = radius;
+            y = radius;;
+            
+            center = juce::Point<float>(0.0f, 0.0f);
+            
+            
+            startArc = 3* juce::MathConstants<float>::halfPi;
+            endArc = juce::MathConstants<float>::twoPi;
+            
+            break;
 
+        case 3:// top-left
+            x = heightF;
+            y = heightF - radius;
+            center = juce::Point<float>(widthF, widthF);
+            
+            startArc = juce::MathConstants<float>::halfPi;
+            endArc = juce::MathConstants<float>::pi;
+            break;
+
+        case 2: // bottom-left
+        default:
+            x = widthF - radius;
+            y = -radius;
+            center = juce::Point<float>(widthF, 0.0f);
+            
+            startArc = juce::MathConstants<float>::pi;
+            endArc = 3 * juce::MathConstants<float>::halfPi;
+            break;
+    }
+    
+    centerPoint = center;
+
+    // Create arc path
     juce::Path path;
-    path.startNewSubPath(center);  // Starting at the circle's center
-
-    // Add a quarter-circle arc (bottom-left quarter)
+    path.startNewSubPath(center);
     path.addArc(x, y, diameter, diameter,
-                juce::MathConstants<float>::pi,
-                3 * juce::MathConstants<float>::halfPi, true);
-
-    path.lineTo(center);  // Close the wedge by connecting back to the center
+                startArc,
+                endArc, true);
+    path.lineTo(center);
     path.closeSubPath();
-    
 
-    g.fillPath(path);  // Normal rendering without blur
-    
-    g.drawImageAt(gradientImage, 0, 0);
-    drawGrain(g);
+    // Draw arc
+    g.fillPath(path);
+
+    // Label and hover styling
     g.setColour(isHovered ? juce::Colours::white : juce::Colours::black);
-    
-    g.drawText("Radius: " + juce::String(radius), getLocalBounds(),
+    g.drawText("Radius: " + juce::String(radius),
+               getLocalBounds(),
                juce::Justification::topRight);
-    
-    
 }
+
+
 
 
 
 // Handle mouse drag to update the radius
 void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
 {
-    juce::Point<float> center(getWidth(), 0.f);
+    //juce::Point<float> center(getWidth(), 0.f);
     //juce::Point<float> center(getWidth(), 0.f);
     
 
-    float newRadius = event.position.getDistanceFrom(center);
+    float newRadius = event.position.getDistanceFrom(centerPoint);
     radius = juce::jlimit(100.0f, 200.0f, newRadius); // Constrain radius
     
 
@@ -101,83 +149,83 @@ void QuarterCircle::mouseEnter(const juce::MouseEvent& event)
     }
 
 
-void QuarterCircle::generateGradient()
-{
-    int w = getWidth();
-    int h = getHeight();
-
-    gradientImage = juce::Image(juce::Image::RGB, w, h, true);
-    juce::Graphics g(gradientImage);
-
-    juce::ColourGradient gradient(juce::Colours::black, 0, 0,
-                                  juce::Colours::white, w, h, false);
-    g.setGradientFill(gradient);
-    g.fillAll();
-}
-
-float QuarterCircle::halton(int index, int base)
-{
-    float result = 0;
-    float f = 1.0f / base;
-    int i = index;
-
-    while (i > 0)
-    {
-        result += f * (i % base);
-        i = std::floor(i / base);
-        f /= base;
-    }
-
-    return result;
-}
-
-void QuarterCircle::drawGrain(juce::Graphics& g)
-{
-    int w = gradientImage.getWidth();
-    int h = gradientImage.getHeight();
-    
-    float dotSize = 4.0f;  // Max dot size
-    float density = 1.f;  // Higher density = more grains
-    float threshold = 0.15f;  // Controls visibility
-
-    int area = std::round((w * density) * (h * density));
-
-    // **Clip the drawing region to the quarter-circle**
-    juce::Path clipPath;
-    float diameter = radius * 2.0f;
-    float x = getWidth() - radius;
-    float y = -radius;
-    juce::Point<float> center(getWidth(), 0.0f);
-    
-    clipPath.startNewSubPath(center);
-    clipPath.addArc(x, y, diameter, diameter,
-                    juce::MathConstants<float>::pi,
-                    3 * juce::MathConstants<float>::halfPi, true);
-    clipPath.lineTo(center);
-    clipPath.closeSubPath();
-
-    g.reduceClipRegion(clipPath);  // **Restrict drawing area to the quarter-circle**
-
-    for (int i = 0; i < area; i++)
-    {
-        float px = halton(i, 2) * w;
-        float py = halton(i, 3) * h;
-
-        // Get brightness from the gradient
-        juce::Colour pixelColor = gradientImage.getPixelAt((int)px, (int)py);
-        float brightness = pixelColor.getBrightness();
-
-        brightness = juce::jmap(brightness, 0.0f, 1.0f, 0.0f, 1.0f - threshold);
-        float pointSize = dotSize * (1.0f - brightness);
-
-        if (juce::Random::getSystemRandom().nextFloat() >= brightness)
-        {
-            g.setColour(juce::Colours::black);
-            g.fillEllipse(px, py, pointSize, pointSize);
-        }
-    }
-
-}
+//void QuarterCircle::generateGradient()
+//{
+//    int w = getWidth();
+//    int h = getHeight();
+//
+//    gradientImage = juce::Image(juce::Image::RGB, w, h, true);
+//    juce::Graphics g(gradientImage);
+//
+//    juce::ColourGradient gradient(juce::Colours::black, 0, 0,
+//                                  juce::Colours::white, w, h, false);
+//    g.setGradientFill(gradient);
+//    g.fillAll();
+//}
+//
+//float QuarterCircle::halton(int index, int base)
+//{
+//    float result = 0;
+//    float f = 1.0f / base;
+//    int i = index;
+//
+//    while (i > 0)
+//    {
+//        result += f * (i % base);
+//        i = std::floor(i / base);
+//        f /= base;
+//    }
+//
+//    return result;
+//}
+//
+//void QuarterCircle::drawGrain(juce::Graphics& g)
+//{
+//    int w = gradientImage.getWidth();
+//    int h = gradientImage.getHeight();
+//    
+//    float dotSize = 4.0f;  // Max dot size
+//    float density = 1.f;  // Higher density = more grains
+//    float threshold = 0.15f;  // Controls visibility
+//
+//    int area = std::round((w * density) * (h * density));
+//
+//    // **Clip the drawing region to the quarter-circle**
+//    juce::Path clipPath;
+//    float diameter = radius * 2.0f;
+//    float x = getWidth() - radius;
+//    float y = -radius;
+//    juce::Point<float> center(getWidth(), 0.0f);
+//    
+//    clipPath.startNewSubPath(center);
+//    clipPath.addArc(x, y, diameter, diameter,
+//                    juce::MathConstants<float>::pi,
+//                    3 * juce::MathConstants<float>::halfPi, true);
+//    clipPath.lineTo(center);
+//    clipPath.closeSubPath();
+//
+//    g.reduceClipRegion(clipPath);  // **Restrict drawing area to the quarter-circle**
+//
+//    for (int i = 0; i < area; i++)
+//    {
+//        float px = halton(i, 2) * w;
+//        float py = halton(i, 3) * h;
+//
+//        // Get brightness from the gradient
+//        juce::Colour pixelColor = gradientImage.getPixelAt((int)px, (int)py);
+//        float brightness = pixelColor.getBrightness();
+//
+//        brightness = juce::jmap(brightness, 0.0f, 1.0f, 0.0f, 1.0f - threshold);
+//        float pointSize = dotSize * (1.0f - brightness);
+//
+//        if (juce::Random::getSystemRandom().nextFloat() >= brightness)
+//        {
+//            g.setColour(juce::Colours::black);
+//            g.fillEllipse(px, py, pointSize, pointSize);
+//        }
+//    }
+//
+//}
 
 
 // ====================================================================================================================
