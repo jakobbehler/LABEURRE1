@@ -1,12 +1,18 @@
 #include <JuceHeader.h>
 #include "QuarterCircle.h"
 
+
+
 // Constructor: Initialize radius
-QuarterCircle::QuarterCircle()
+QuarterCircle::QuarterCircle(int rotationIndex)
 {
-    radius = 100.0f;  // Default radius
-   
+    this->rotation = rotationIndex;  // `this->` clarifies you're assigning to a member variable
+    radius = 75.f;
+    smallestRadius = 50.f;
+    biggestRadius = 200.f;
+    
 }
+
 
 QuarterCircle::~QuarterCircle()
 {
@@ -59,7 +65,10 @@ void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
     
 
     float newRadius = event.position.getDistanceFrom(center);
-    radius = juce::jlimit(100.0f, 300.0f, newRadius); // Constrain radius
+    radius = juce::jlimit(100.0f, 200.0f, newRadius); // Constrain radius
+    
+
+    radius = juce::jlimit(smallestRadius,  biggestRadius , newRadius);
     repaint();
 }
 
@@ -69,7 +78,7 @@ void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
 void QuarterCircle::resized()
 {
     repaint(); // Redraw when resized
-    generateGradient();
+    //generateGradient();
 }
 
 // Getter for radius
@@ -169,4 +178,126 @@ void QuarterCircle::drawGrain(juce::Graphics& g)
     }
 
 }
+
+
+// ====================================================================================================================
+// PARENT
+// ===================================================================================================================
+
+
+CircleComponent::CircleComponent()
+{
+    for (auto& q : quads)
+        addAndMakeVisible(q);
+}
+
+void CircleComponent::resized()
+{
+    auto w = getWidth() / 2;
+    auto h = getHeight() / 2;
+
+    quads[0].setBounds(w, 0, w, h);   // top-right
+    quads[1].setBounds(w, h, w, h);   // bottom-right
+    quads[2].setBounds(0, h, w, h);   // bottom-left
+    quads[3].setBounds(0, 0, w, h);   // top-left
+}
+
+// ====================================================================================================================
+// PARENT
+// ===================================================================================================================
+
+
+
+frequencyLineComponent::frequencyLineComponent()
+{
+    y_position = 400.f;
+    isDragging = false; 
+}
+
+void frequencyLineComponent::paint(juce::Graphics& g)
+{
+    g.setColour(juce::Colours::white);
+
+    // Draw horizontal frequency line
+    g.drawLine(0, y_position, getWidth()-100, y_position, 2.0f);
+
+    // Display y-position
+    juce::Rectangle<int> textBounds(getWidth()-90, y_position -15, 100, 30);
+    g.drawText(juce::String(getHeight() - y_position) + " Hz", textBounds, juce::Justification::left, false);
+}
+
+void frequencyLineComponent::resized()
+{
+    // Ensure y_position stays inside bounds
+    y_position = juce::jlimit(0.0f, (float)getHeight(), y_position);
+    
+    if (y_position == 0.0f){
+        y_position = getHeight() / 2.0f;
+    }
+}
+  
+
+
+
+//void frequencyLineComponent::mouseDown(const juce::MouseEvent& event)
+//    {
+//    float dragThreshold = 10.0f;
+//    // Start dragging only if the mouse is close to the line
+//    if (std::abs(event.position.y - y_position) < dragThreshold)
+//        isDragging = true;
+//}
+
+void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
+    {
+    if (isDragging)
+    {
+        y_position = juce::jlimit(0.0f, (float)getHeight(), event.position.y);
+        repaint();
+        if (onYChanged){
+            onYChanged(y_position);  // 👈 notify parent live
+        }
+    }
+    
+
+}
+
+    
+    void frequencyLineComponent::mouseDown(const juce::MouseEvent& event)
+    {
+        if (std::abs(event.position.y - y_position) < 10.0f)
+        {
+            isDragging = true;
+            setInterceptsMouseClicks(true, false);  // ✅ Capture clicks when near the line
+        }
+        else
+        {
+            setInterceptsMouseClicks(false, false); // ✅ Let clicks pass through to CircleComponent
+        }
+    }
+
+    void frequencyLineComponent::mouseUp(const juce::MouseEvent&)
+    {
+        isDragging = false;
+        setInterceptsMouseClicks(true, false);  // ✅ Restore normal behavior
+    }
+
+    bool frequencyLineComponent::hitTest(int x, int y)
+    {
+        // Only respond if mouse is near the line
+        return std::abs(y - y_position) < 10.0f;
+    }
+
+
+//void frequencyLineComponent::mouseUp(const juce::MouseEvent&)
+//{
+//    isDragging = false;
+//}
+
+
+float frequencyLineComponent::getYposition() const
+{
+    return y_position;
+}
+
+
 

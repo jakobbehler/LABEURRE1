@@ -41,7 +41,8 @@ private:
     // access the processor object that created it.
     
     SimpleEQAudioProcessor& audioProcessor;
-    QuarterCircle quarterCircle;  // Add quarter-circle component
+    CircleComponent circle;
+    frequencyLineComponent freqLine;
 
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)

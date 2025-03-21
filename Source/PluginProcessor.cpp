@@ -320,6 +320,7 @@ void SimpleEQAudioProcessor::applyCompressorSettings(juce::dsp::Compressor<float
     gain.setGainDecibels(settings.makeupGain);
     
     float fastestAttack = 1000.0f / getSampleRate();
+    
     // Attack & Release settings based on compressor speed (0 = Fast, 1 = Slow)
     const std::array<float, 2> attackTimes = {fastestAttack, 100.0f};  // ms
     const std::array<float, 2> releaseTimes = {50.0f, 200.0f}; // ms

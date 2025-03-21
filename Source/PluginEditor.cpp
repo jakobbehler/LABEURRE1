@@ -16,8 +16,17 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     
         
 
-    addAndMakeVisible(quarterCircle);
-    setSize (600, 400);
+    addAndMakeVisible(circle);
+    addAndMakeVisible(freqLine);
+    //circle.setBounds(100, 100, 200, 200);  // adjust as needed
+
+    setSize (1000, 600);
+    
+    freqLine.onYChanged = [this](float y)
+    {
+        circle.setTopLeftPosition(300, y - 200);
+    };
+
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
@@ -40,14 +49,13 @@ void SimpleEQAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    int quarterCircleSize = 300; // Size of the quarter-circle component
-    int xPosition = (getWidth() - quarterCircleSize) / 2;  // Center horizontally
-    int yPosition = (getHeight() - quarterCircleSize) / 2; // Center vertically
-    
-    quarterCircle.setBounds(xPosition, yPosition, quarterCircleSize, quarterCircleSize);
-    
-    //float radius = quarterCircle.getRadius();
-    
-}
-
  
+    
+
+    //float radius = quarterCircle.getRadius();
+    freqLine.setBounds(0, 0, getWidth(), getHeight());
+
+    float lineYpos = freqLine.getYposition();
+    circle.setBounds(300, 200, 400, 400); // Circle now aligns correctly
+
+}
