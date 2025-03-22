@@ -39,6 +39,8 @@ void QuarterCircle::paint(juce::Graphics& g)
     switch (rotation)
     {
         case 0: // top-right
+            
+            effectName = "distortionTop";
             x = -radius;
             y = heightF - radius;
             center = juce::Point<float>(0.0f, heightF);
@@ -46,10 +48,12 @@ void QuarterCircle::paint(juce::Graphics& g)
             startArc = 0.f;
             endArc = juce::MathConstants<float>::halfPi;
             
+            
             break;
 
         case 1: // bottom-right
             
+            effectName = "distortionLow";
             x = -radius;
             y = -radius;
             center = juce::Point<float>(0, 0);
@@ -61,6 +65,8 @@ void QuarterCircle::paint(juce::Graphics& g)
             break;
 
         case 3:// top-left
+            
+            effectName = "compressionTop";
                 x = widthF - radius;
             y = heightF-radius;
                 center = juce::Point<float>(widthF, heightF);
@@ -71,6 +77,8 @@ void QuarterCircle::paint(juce::Graphics& g)
 
         case 2: // bottom-left
         default:
+            
+            effectName = "compressionBottom";
             x = widthF - radius;
             y = -radius;
             center = juce::Point<float>(widthF, 0.0f);
@@ -96,7 +104,8 @@ void QuarterCircle::paint(juce::Graphics& g)
 
     // Label and hover styling
     g.setColour(isHovered ? juce::Colours::white : juce::Colours::black);
-    g.drawText("Radius: " + juce::String(radius),
+    juce::String text =juce::String(effectName) + " Radius: " + juce::String(radius);
+    g.drawText(text,
                getLocalBounds(),
                juce::Justification::topRight);
 }
@@ -118,6 +127,9 @@ void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
 
     radius = juce::jlimit(smallestRadius,  biggestRadius , newRadius);
     repaint();
+    
+    if (onRadiusChanged)
+            onRadiusChanged(radius);
 }
 
 
@@ -134,6 +146,13 @@ float QuarterCircle::getRadius() const
 {
     return radius;
 }
+
+void QuarterCircle::setRadius(float newRadius)
+{
+    radius = juce::jlimit(smallestRadius, biggestRadius, newRadius);
+    repaint();
+}
+
 
 
 void QuarterCircle::mouseEnter(const juce::MouseEvent& event)
@@ -249,6 +268,13 @@ void CircleComponent::resized()
     quads[2].setBounds(0, h, w, h);   // bottom-left
     quads[3].setBounds(0, 0, w, h);   // top-left
 }
+
+QuarterCircle& CircleComponent::getQuad(int index)
+{
+    jassert(index >= 0 && index < 4);  // Safety check
+    return quads[index];
+}
+
 
 // ====================================================================================================================
 // PARENT

@@ -35,6 +35,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void timerCallback();
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -43,6 +44,7 @@ private:
     SimpleEQAudioProcessor& audioProcessor;
     CircleComponent circle;
     frequencyLineComponent freqLine;
+    
 
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)

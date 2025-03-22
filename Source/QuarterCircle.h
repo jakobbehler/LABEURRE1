@@ -18,16 +18,20 @@ public:
     void resized() override;
     void mouseDrag(const juce::MouseEvent& event) override; // Allow radius change
     float getRadius() const;
+    void setRadius(float newRadius);
     
     void mouseEnter(const juce::MouseEvent& event) override;
     void mouseExit(const juce::MouseEvent& event) override;
     
+    std::function<void(float)> onRadiusChanged;
+
     
 private:
     float radius; // Store the radius of the quarter-circle
     float smallestRadius;
     float biggestRadius;
     int rotation;
+    juce::String effectName;
     juce::Point<float> centerPoint;
     
     
@@ -51,6 +55,8 @@ public:
     ~CircleComponent() override = default;
 
     void resized() override;
+    QuarterCircle& getQuad(int index);
+
 
 private:
     
