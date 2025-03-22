@@ -49,24 +49,24 @@ void QuarterCircle::paint(juce::Graphics& g)
             break;
 
         case 1: // bottom-right
-            x = radius;
-            y = radius;;
             
-            center = juce::Point<float>(0.0f, 0.0f);
+            x = -radius;
+            y = -radius;
+            center = juce::Point<float>(0, 0);
             
-            
-            startArc = 3* juce::MathConstants<float>::halfPi;
-            endArc = juce::MathConstants<float>::twoPi;
+            startArc = juce::MathConstants<float>::halfPi;
+            endArc = juce::MathConstants<float>::pi;
+
             
             break;
 
         case 3:// top-left
-            x = heightF;
-            y = heightF - radius;
-            center = juce::Point<float>(widthF, widthF);
-            
-            startArc = juce::MathConstants<float>::halfPi;
-            endArc = juce::MathConstants<float>::pi;
+                x = widthF - radius;
+            y = heightF-radius;
+                center = juce::Point<float>(widthF, heightF);
+
+            startArc = juce::MathConstants<float>::halfPi;;
+            endArc = juce::MathConstants<float>::twoPi;
             break;
 
         case 2: // bottom-left
@@ -305,7 +305,6 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
             onYChanged(y_position);  // 👈 notify parent live
         }
     }
-    
 
 }
 
