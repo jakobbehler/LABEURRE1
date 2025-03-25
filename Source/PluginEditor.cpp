@@ -34,38 +34,58 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
 
     auto& apvts = audioProcessor.apvts;
 
-    auto& q0 = circle.getQuad(0); // Top-right → distHigh
-    q0.setRadius(apvts.getRawParameterValue("distHighIntensity")->load());
-    q0.onRadiusChanged = [this](float val)
+  
+    auto normalize = [](float radius)
     {
-        DBG("[Editor] Sending distHighIntensity to processor: " << val);
+        return (radius - 50.0f) / (300.0f - 50.0f);
+    };
+
+    auto denormalize = [](float norm)
+    {
+        return 50.0f + norm * (300.0f - 50.0f);
+    };
+
+    // Top-right → distHigh
+    auto& q0 = circle.getQuad(0);
+    q0.setRadius(denormalize(apvts.getRawParameterValue("distHighIntensity")->load()));
+    q0.onRadiusChanged = [this, normalize](float radius)
+    {
+        float norm = normalize(radius);
+        DBG("[Editor] Sending distHighIntensity to processor: " << norm);
         auto* param = audioProcessor.apvts.getParameter("distHighIntensity");
-        param->setValueNotifyingHost(param->convertTo0to1(val));
+        param->setValueNotifyingHost(norm);
     };
 
-    auto& q1 = circle.getQuad(1); // Bottom-right → distLow
-    q1.setRadius(apvts.getRawParameterValue("distLowIntensity")->load());
-    q1.onRadiusChanged = [this](float val)
+    // Bottom-right → distLow
+    auto& q1 = circle.getQuad(1);
+    q1.setRadius(denormalize(apvts.getRawParameterValue("distLowIntensity")->load()));
+    q1.onRadiusChanged = [this, normalize](float radius)
     {
+        float norm = normalize(radius);
         auto* param = audioProcessor.apvts.getParameter("distLowIntensity");
-        param->setValueNotifyingHost(param->convertTo0to1(val));
+        param->setValueNotifyingHost(norm);
     };
 
-    auto& q2 = circle.getQuad(2); // Bottom-left → compLow
-    q2.setRadius(apvts.getRawParameterValue("compLowIntensity")->load());
-    q2.onRadiusChanged = [this](float val)
+    // Bottom-left → compLow
+    auto& q2 = circle.getQuad(2);
+    q2.setRadius(denormalize(apvts.getRawParameterValue("compLowIntensity")->load()));
+    q2.onRadiusChanged = [this, normalize](float radius)
     {
+        float norm = normalize(radius);
         auto* param = audioProcessor.apvts.getParameter("compLowIntensity");
-        param->setValueNotifyingHost(param->convertTo0to1(val));
+        param->setValueNotifyingHost(norm);
     };
 
-    auto& q3 = circle.getQuad(3); // Top-left → compHigh
-    q3.setRadius(apvts.getRawParameterValue("compHighIntensity")->load());
-    q3.onRadiusChanged = [this](float val)
+    // Top-left → compHigh
+    auto& q3 = circle.getQuad(3);
+    q3.setRadius(denormalize(apvts.getRawParameterValue("compHighIntensity")->load()));
+    q3.onRadiusChanged = [this, normalize](float radius)
     {
+        float norm = normalize(radius);
         auto* param = audioProcessor.apvts.getParameter("compHighIntensity");
-        param->setValueNotifyingHost(param->convertTo0to1(val));
+        param->setValueNotifyingHost(norm);
     };
+
 
 
        
@@ -107,9 +127,15 @@ void SimpleEQAudioProcessorEditor::timerCallback()
 {
     auto& apvts = audioProcessor.apvts;
 
-    circle.getQuad(0).setRadius(apvts.getRawParameterValue("distortionTop")->load());
-    circle.getQuad(1).setRadius(apvts.getRawParameterValue("distortionLow")->load());
-    circle.getQuad(2).setRadius(apvts.getRawParameterValue("compressionBottom")->load());
-    circle.getQuad(3).setRadius(apvts.getRawParameterValue("compressionTop")->load());
+    auto denormalize = [](float norm)
+    {
+        return 50.0f + norm * (300.0f - 50.0f);
+    };
+
+    circle.getQuad(0).setRadius(denormalize(apvts.getRawParameterValue("distortionTop")->load()));
+    circle.getQuad(1).setRadius(denormalize(apvts.getRawParameterValue("distortionLow")->load()));
+    circle.getQuad(2).setRadius(denormalize(apvts.getRawParameterValue("compressionBottom")->load()));
+    circle.getQuad(3).setRadius(denormalize(apvts.getRawParameterValue("compressionTop")->load()));
 }
+
 

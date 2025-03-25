@@ -260,13 +260,18 @@ CircleComponent::CircleComponent()
 
 void CircleComponent::resized()
 {
-    auto w = getWidth() / 2;
-    auto h = getHeight() / 2;
+    const int padding = 10; // Half of 20px gap, applied on each adjacent edge
+    const auto w = getWidth() / 2;
+    const auto h = getHeight() / 2;
 
-    quads[0].setBounds(w, 0, w, h);   // top-right
-    quads[1].setBounds(w, h, w, h);   // bottom-right
-    quads[2].setBounds(0, h, w, h);   // bottom-left
-    quads[3].setBounds(0, 0, w, h);   // top-left
+    // Width and height adjusted for padding (20px gap total between adjacent quads)
+    const auto paddedW = w - padding;
+    const auto paddedH = h - padding;
+
+    quads[0].setBounds(w + padding, 0, paddedW, paddedH);       // top-right
+    quads[1].setBounds(w + padding, h + padding, paddedW, paddedH); // bottom-right
+    quads[2].setBounds(0, h + padding, paddedW, paddedH);       // bottom-left
+    quads[3].setBounds(0, 0, paddedW, paddedH);                 // top-left
 }
 
 QuarterCircle& CircleComponent::getQuad(int index)
@@ -303,7 +308,7 @@ void frequencyLineComponent::paint(juce::Graphics& g)
 void frequencyLineComponent::resized()
 {
     // Ensure y_position stays inside bounds
-    y_position = juce::jlimit(0.0f, (float)getHeight(), y_position);
+    y_position = juce::jlimit(200.0f, 490.0f, y_position);
     
     if (y_position == 0.0f){
         y_position = getHeight() / 2.0f;

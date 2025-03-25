@@ -26,7 +26,7 @@
 
 
 
-class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor
+class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
     SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor&);
@@ -35,7 +35,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    void timerCallback();
+    void timerCallback() override;
 
 private:
     // This reference is provided as a quick way for your editor to
