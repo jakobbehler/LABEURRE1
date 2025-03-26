@@ -9,7 +9,7 @@ QuarterCircle::QuarterCircle(int rotationIndex)
     this->rotation = rotationIndex;  // `this->` clarifies you're assigning to a member variable
     radius = 75.f;
     smallestRadius = 50.f;
-    biggestRadius = 200.f;
+    biggestRadius = 190.f;
     
 }
 
@@ -122,7 +122,7 @@ void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
     
 
     float newRadius = event.position.getDistanceFrom(centerPoint);
-    radius = juce::jlimit(100.0f, 200.0f, newRadius); // Constrain radius
+    radius = juce::jlimit(100.0f, 190.f, newRadius); // Constrain radius
     
 
     radius = juce::jlimit(smallestRadius,  biggestRadius , newRadius);
@@ -260,19 +260,21 @@ CircleComponent::CircleComponent()
 
 void CircleComponent::resized()
 {
-    const int padding = 10; // Half of 20px gap, applied on each adjacent edge
-    const auto w = getWidth() / 2;
-    const auto h = getHeight() / 2;
+    const int margin = 20;
+    const auto w = getWidth();
+    const auto h = getHeight();
 
-    // Width and height adjusted for padding (20px gap total between adjacent quads)
-    const auto paddedW = w - padding;
-    const auto paddedH = h - padding;
+    // Total size to subtract from full width/height due to margin in between
+    const int quadW = (w - margin) / 2;
+    const int quadH = (h - margin) / 2;
 
-    quads[0].setBounds(w + padding, 0, paddedW, paddedH);       // top-right
-    quads[1].setBounds(w + padding, h + padding, paddedW, paddedH); // bottom-right
-    quads[2].setBounds(0, h + padding, paddedW, paddedH);       // bottom-left
-    quads[3].setBounds(0, 0, paddedW, paddedH);                 // top-left
+    // Position the 4 quarter circles with a 20px margin in between
+    quads[0].setBounds(quadW + margin, 0, quadW, quadH);                // top-right
+    quads[1].setBounds(quadW + margin, quadH + margin, quadW, quadH);   // bottom-right
+    quads[2].setBounds(0, quadH + margin, quadW, quadH);                // bottom-left
+    quads[3].setBounds(0, 0, quadW, quadH);                             // top-left
 }
+
 
 QuarterCircle& CircleComponent::getQuad(int index)
 {
@@ -295,20 +297,20 @@ frequencyLineComponent::frequencyLineComponent()
 
 void frequencyLineComponent::paint(juce::Graphics& g)
 {
-    g.setColour(juce::Colours::white);
+    g.setColour(juce::Colours::black); //
 
     // Draw horizontal frequency line
-    g.drawLine(0, y_position, getWidth()-100, y_position, 2.0f);
+    g.drawLine(0, y_position, getWidth() - 100, y_position, 2.0f);
 
-    // Display y-position
-    juce::Rectangle<int> textBounds(getWidth()-90, y_position -15, 100, 30);
+    // Display y-position label
+    juce::Rectangle<int> textBounds(getWidth() - 90, y_position - 15, 100, 30);
     g.drawText(juce::String(getHeight() - y_position) + " Hz", textBounds, juce::Justification::left, false);
 }
 
 void frequencyLineComponent::resized()
 {
     // Ensure y_position stays inside bounds
-    y_position = juce::jlimit(200.0f, 490.0f, y_position);
+    y_position = juce::jlimit(200.0f, 400.f, y_position);
     
     if (y_position == 0.0f){
         y_position = getHeight() / 2.0f;
@@ -330,7 +332,7 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
     {
     if (isDragging)
     {
-        y_position = juce::jlimit(0.0f, (float)getHeight(), event.position.y);
+        y_position = juce::jlimit(200.0f, 400.f, event.position.y);
         repaint();
         if (onYChanged){
             onYChanged(y_position);  // 👈 notify parent live

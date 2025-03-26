@@ -37,12 +37,12 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
   
     auto normalize = [](float radius)
     {
-        return (radius - 50.0f) / (300.0f - 50.0f);
+        return (radius - 50.0f) / (190.f - 50.0f);
     };
 
     auto denormalize = [](float norm)
     {
-        return 50.0f + norm * (300.0f - 50.0f);
+        return 50.0f + norm * (190.f - 50.0f);
     };
 
     // Top-right → distHigh
@@ -99,9 +99,7 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-//
-//    g.setColour (juce::Colours::white);
+    g.fillAll(juce::Colours::white);
 //    g.setFont (juce::FontOptions (15.0f));
 //    g.drawFittedText ("Hello!", getLocalBounds(), juce::Justification::centred, 1);
 }
@@ -110,6 +108,7 @@ void SimpleEQAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+    
     
  
     
@@ -129,7 +128,7 @@ void SimpleEQAudioProcessorEditor::timerCallback()
 
     auto denormalize = [](float norm)
     {
-        return 50.0f + norm * (300.0f - 50.0f);
+        return 50.0f + norm * (190.f - 50.0f);
     };
 
     circle.getQuad(0).setRadius(denormalize(apvts.getRawParameterValue("distortionTop")->load()));
