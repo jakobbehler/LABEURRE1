@@ -22,16 +22,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
 
     setSize (1000, 600);
     
-    freqLine.onYChanged = [this](float herz)
-    {
-        auto* param = audioProcessor.apvts.getParameter("bandsplit_frequency");
-        param->setValueNotifyingHost(param->convertTo0to1(herz));
-
-        // 👇 This updates the circle's position
-        circle.setTopLeftPosition(300, freqLine.getYposition() - 200);
-    };
-
-
+   
 
     
     // ======= 🔗 PARAMETER CONNECTIONS START =======
@@ -92,14 +83,14 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
         param->setValueNotifyingHost(norm);
     };
     
-
-
-    // When user drags the line, send updated Herz directly
+    
     freqLine.onYChanged = [this](float herz)
     {
         auto* param = audioProcessor.apvts.getParameter("bandsplit_frequency");
-        param->setValueNotifyingHost(param->convertTo0to1(herz)); // Only normalize here
-        DBG("[Editor] Sending bandsplit_frequency to processor: " << herz);
+        param->setValueNotifyingHost(param->convertTo0to1(herz));
+
+        float y = freqLine.getYposition(); // 🟢 query directly
+        circle.setTopLeftPosition(300, y - 200);
     };
 
 
