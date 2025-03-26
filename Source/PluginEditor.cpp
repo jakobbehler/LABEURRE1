@@ -22,10 +22,16 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
 
     setSize (1000, 600);
     
-    freqLine.onYChanged = [this](float y)
+    freqLine.onYChanged = [this](float herz)
     {
-        circle.setTopLeftPosition(300, y - 200);
+        auto* param = audioProcessor.apvts.getParameter("bandsplit_frequency");
+        param->setValueNotifyingHost(param->convertTo0to1(herz));
+
+        // 👇 This updates the circle's position
+        circle.setTopLeftPosition(300, freqLine.getYposition() - 200);
     };
+
+
 
     
     // ======= 🔗 PARAMETER CONNECTIONS START =======
@@ -85,7 +91,16 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
         auto* param = audioProcessor.apvts.getParameter("compHighIntensity");
         param->setValueNotifyingHost(norm);
     };
+    
 
+
+    // When user drags the line, send updated Herz directly
+    freqLine.onYChanged = [this](float herz)
+    {
+        auto* param = audioProcessor.apvts.getParameter("bandsplit_frequency");
+        param->setValueNotifyingHost(param->convertTo0to1(herz)); // Only normalize here
+        DBG("[Editor] Sending bandsplit_frequency to processor: " << herz);
+    };
 
 
        
@@ -115,9 +130,6 @@ void SimpleEQAudioProcessorEditor::resized()
 
     //float radius = quarterCircle.getRadius();
     freqLine.setBounds(0, 0, getWidth(), getHeight());
-
-    float lineYpos = freqLine.getYposition();
-    
     circle.setBounds(300, 200, 400, 400); // Circle now aligns correctly
     
 }
@@ -135,6 +147,8 @@ void SimpleEQAudioProcessorEditor::timerCallback()
     circle.getQuad(1).setRadius(denormalize(apvts.getRawParameterValue("distortionLow")->load()));
     circle.getQuad(2).setRadius(denormalize(apvts.getRawParameterValue("compressionBottom")->load()));
     circle.getQuad(3).setRadius(denormalize(apvts.getRawParameterValue("compressionTop")->load()));
+    freqLine.setHerz(apvts.getRawParameterValue("bandsplit_frequency")->load());
+
 }
 
 

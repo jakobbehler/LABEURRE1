@@ -76,30 +76,32 @@ private:
 
 class frequencyLineComponent : public juce::Component
 {
-    public:
-        frequencyLineComponent();
-        ~frequencyLineComponent() override = default;
-    
-        
+public:
+    frequencyLineComponent();
 
     void paint(juce::Graphics&) override;
-    
     void resized() override;
     
-    void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
-    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent&) override;
     bool hitTest(int x, int y) override;
-    
+
     float getYposition() const;
-    
-    std::function<void(float)> onYChanged;  // 👈 signal to parent
+    void setYposition(double y);
 
+    float getHerz() const;
+    void setHerz(float newHerz);
+    void updateYFromHerz();
 
-    private:
-        
-    float y_position;
-    bool isDragging;
-        
-    
+    std::function<void(float)> onYChanged;
+
+private:
+    float y_position_pixels = 400.0f;
+    float herz = 1000.0f;
+
+    bool isDragging = false;
+
+    void updateHerzFromY();
 };
+

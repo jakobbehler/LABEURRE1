@@ -291,8 +291,8 @@ QuarterCircle& CircleComponent::getQuad(int index)
 
 frequencyLineComponent::frequencyLineComponent()
 {
-    y_position = 400.f;
-    isDragging = false; 
+    y_position_pixels = 400.f;
+    isDragging = false;
 }
 
 void frequencyLineComponent::paint(juce::Graphics& g)
@@ -300,20 +300,20 @@ void frequencyLineComponent::paint(juce::Graphics& g)
     g.setColour(juce::Colours::black); //
 
     // Draw horizontal frequency line
-    g.drawLine(0, y_position, getWidth() - 100, y_position, 2.0f);
+    g.drawLine(0, y_position_pixels, getWidth() - 100, y_position_pixels, 2.0f);
 
     // Display y-position label
-    juce::Rectangle<int> textBounds(getWidth() - 90, y_position - 15, 100, 30);
-    g.drawText(juce::String(getHeight() - y_position) + " Hz", textBounds, juce::Justification::left, false);
+    juce::Rectangle<int> textBounds(getWidth() - 90, y_position_pixels - 15, 100, 30);
+    g.drawText(juce::String(herz) + " Hz", textBounds, juce::Justification::left, false);
 }
 
 void frequencyLineComponent::resized()
 {
     // Ensure y_position stays inside bounds
-    y_position = juce::jlimit(200.0f, 400.f, y_position);
+    y_position_pixels = juce::jlimit(200.0f, 400.f, y_position_pixels);
     
-    if (y_position == 0.0f){
-        y_position = getHeight() / 2.0f;
+    if (y_position_pixels == 0.0f){
+        y_position_pixels = getHeight() / 2.0f;
     }
 }
   
@@ -329,22 +329,25 @@ void frequencyLineComponent::resized()
 //}
 
 void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
-    {
+{
     if (isDragging)
     {
-        y_position = juce::jlimit(200.0f, 400.f, event.position.y);
-        repaint();
-        if (onYChanged){
-            onYChanged(y_position);  // 👈 notify parent live
-        }
-    }
+        y_position_pixels = juce::jlimit(200.0f, 400.0f, event.position.y);
+        updateHerzFromY();  // Updates `herz`
 
+        repaint();
+
+        if (onYChanged)
+            onYChanged(herz);  // Only from user drag
+    }
 }
+
+
 
     
     void frequencyLineComponent::mouseDown(const juce::MouseEvent& event)
     {
-        if (std::abs(event.position.y - y_position) < 10.0f)
+        if (std::abs(event.position.y - y_position_pixels) < 10.0f)
         {
             isDragging = true;
             setInterceptsMouseClicks(true, false);  // ✅ Capture clicks when near the line
@@ -364,7 +367,7 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
     bool frequencyLineComponent::hitTest(int x, int y)
     {
         // Only respond if mouse is near the line
-        return std::abs(y - y_position) < 10.0f;
+        return std::abs(y - y_position_pixels) < 10.0f;
     }
 
 
@@ -376,8 +379,50 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
 
 float frequencyLineComponent::getYposition() const
 {
-    return y_position;
+    return y_position_pixels;
 }
 
 
+void frequencyLineComponent::setYposition(double y)
+{
+    y_position_pixels = static_cast<float>(y);
+}
+
+void frequencyLineComponent::updateHerzFromY()
+{
+    // You can make this log scale if needed
+    const float minY = 200.0f;
+    const float maxY = 400.0f;
+    const float minHz = 20.0f;
+    const float maxHz = 20000.0f;
+
+    float norm = juce::jlimit(0.0f, 1.0f, (y_position_pixels - minY) / (maxY - minY));
+    float logHz = juce::jmap(norm, std::log10(minHz), std::log10(maxHz));
+    herz = std::pow(10.0f, logHz);
+}
+
+float frequencyLineComponent::getHerz() const
+{
+    return herz;
+}
+
+
+void frequencyLineComponent::setHerz(float newHerz)
+{
+    herz = juce::jlimit(20.0f, 20000.0f, newHerz); // Sanity check
+    updateYFromHerz();
+    repaint();
+}
+
+void frequencyLineComponent::updateYFromHerz()
+{
+    const float minY = 200.0f;
+    const float maxY = 400.0f;
+    const float minHz = 20.0f;
+    const float maxHz = 20000.0f;
+
+    float logHz = std::log10(herz);
+    float norm = (logHz - std::log10(minHz)) / (std::log10(maxHz) - std::log10(minHz));
+    y_position_pixels = juce::jmap(norm, minY, maxY);
+}
 
