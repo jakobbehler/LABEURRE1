@@ -181,6 +181,17 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 
     // Get real-time crossover frequency
     float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
+    
+    // DEBUG
+    
+    static float lastFreq = -1.0f; // cache last value
+    if (std::abs(lastFreq - crossoverFreq) > 0.01f) // only log changes
+    {
+        DBG("🔀 Band Split Frequency updated: " << crossoverFreq << " Hz");
+        lastFreq = crossoverFreq;
+    }
+
+    //---
     leftChain.get<0>().setCutoffFrequency(crossoverFreq);
     rightChain.get<0>().setCutoffFrequency(crossoverFreq);
 

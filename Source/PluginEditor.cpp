@@ -48,9 +48,9 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     q0.onRadiusChanged = [this, normalize](float radius)
     {
         float norm = normalize(radius);
-        DBG("[Editor] Sending distHighIntensity to processor: " << norm);
         auto* param = audioProcessor.apvts.getParameter("distHighIntensity");
         param->setValueNotifyingHost(norm);
+        DBG("[Editor] Sending distHighIntensity to processor: " << norm);
     };
 
     // Bottom-right → distLow
@@ -124,7 +124,6 @@ void SimpleEQAudioProcessorEditor::resized()
     circle.setBounds(300, 200, 400, 400); // Circle now aligns correctly
     
 }
-
 void SimpleEQAudioProcessorEditor::timerCallback()
 {
     auto& apvts = audioProcessor.apvts;
@@ -134,12 +133,13 @@ void SimpleEQAudioProcessorEditor::timerCallback()
         return 50.0f + norm * (190.f - 50.0f);
     };
 
-    circle.getQuad(0).setRadius(denormalize(apvts.getRawParameterValue("distortionTop")->load()));
-    circle.getQuad(1).setRadius(denormalize(apvts.getRawParameterValue("distortionLow")->load()));
-    circle.getQuad(2).setRadius(denormalize(apvts.getRawParameterValue("compressionBottom")->load()));
-    circle.getQuad(3).setRadius(denormalize(apvts.getRawParameterValue("compressionTop")->load()));
-    freqLine.setHerz(apvts.getRawParameterValue("bandsplit_frequency")->load());
+    // ✅ These match what's registered in the processor
+    circle.getQuad(0).setRadius(denormalize(apvts.getRawParameterValue("distHighIntensity")->load()));
+    circle.getQuad(1).setRadius(denormalize(apvts.getRawParameterValue("distLowIntensity")->load()));
+    circle.getQuad(2).setRadius(denormalize(apvts.getRawParameterValue("compLowIntensity")->load()));
+    circle.getQuad(3).setRadius(denormalize(apvts.getRawParameterValue("compHighIntensity")->load()));
 
+    freqLine.setHerz(apvts.getRawParameterValue("bandsplit_frequency")->load());
 }
 
 
