@@ -9,7 +9,7 @@ QuarterCircle::QuarterCircle(int rotationIndex)
     this->rotation = rotationIndex;  // `this->` clarifies you're assigning to a member variable
     radius = 75.f;
     smallestRadius = 50.f;
-    biggestRadius = 190.f;
+    biggestRadius = 145.f;
     
 }
 
@@ -122,7 +122,7 @@ void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
     
 
     float newRadius = event.position.getDistanceFrom(centerPoint);
-    radius = juce::jlimit(100.0f, 190.f, newRadius); // Constrain radius
+    radius = juce::jlimit(50.f, 145.f, newRadius); // Constrain radius
     
 
     radius = juce::jlimit(smallestRadius,  biggestRadius , newRadius);
@@ -260,7 +260,7 @@ CircleComponent::CircleComponent()
 
 void CircleComponent::resized()
 {
-    const int margin = 20;
+    const int margin = 10;
     const auto w = getWidth();
     const auto h = getHeight();
 
@@ -291,7 +291,7 @@ QuarterCircle& CircleComponent::getQuad(int index)
 
 frequencyLineComponent::frequencyLineComponent()
 {
-    y_position_pixels = 400.f;
+    y_position_pixels = 125.f;
     isDragging = false;
 }
 
@@ -305,18 +305,23 @@ void frequencyLineComponent::paint(juce::Graphics& g)
     // Display y-position label
     juce::Rectangle<int> textBounds(getWidth() - 90, y_position_pixels - 15, 100, 30);
     g.drawText(juce::String(herz) + " Hz", textBounds, juce::Justification::left, false);
+    
+    g.setColour(juce::Colours::red);
+    g.drawRect(getLocalBounds());
 }
 
 void frequencyLineComponent::resized()
 {
     // Ensure y_position stays inside bounds
-    y_position_pixels = juce::jlimit(200.0f, 400.f, y_position_pixels);
+    y_position_pixels = juce::jlimit(210.f, 560.f, y_position_pixels);
     
     if (y_position_pixels == 0.0f){
         y_position_pixels = getHeight() / 2.0f;
     }
 }
   
+
+
 
 
 
@@ -332,7 +337,7 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
 {
     if (isDragging)
     {
-        y_position_pixels = juce::jlimit(100.f, 500.f, event.position.y);
+        y_position_pixels = juce::jlimit(210.f, 560.f, event.position.y);
      
 
         updateHerzFromY();  // Updates `herz`
@@ -393,8 +398,8 @@ void frequencyLineComponent::setYposition(double y)
 void frequencyLineComponent::updateHerzFromY()
 {
     // You can make this log scale if needed
-    const float minY = 100.f;
-    const float maxY = 500.f;
+    const float minY = 210.f;
+    const float maxY = 560.f;
     const float minHz = 20.0f;
     const float maxHz = 20000.0f;
 
@@ -422,8 +427,8 @@ void frequencyLineComponent::setHerz(float newHerz)
 
 void frequencyLineComponent::updateYFromHerz()
 {
-    const float minY = 100.f;
-    const float maxY = 500.f;
+    const float minY = 210.f;
+    const float maxY = 560.f;
     const float minHz = 20.0f;
     const float maxHz = 20000.0f;
 

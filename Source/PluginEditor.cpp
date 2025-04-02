@@ -15,14 +15,16 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
 {
     
         
-
+    
     addAndMakeVisible(circle);
-    addAndMakeVisible(freqLine);
+    
     //circle.setBounds(100, 100, 200, 200);  // adjust as needed
     addAndMakeVisible(visualizer);
-    addAndMAkeVisible(knobSection);
+    addAndMakeVisible(knobSection);
+    addAndMakeVisible(freqLine);
+    freqLine.toFront(false);
         
-    setSize (1000, 600);
+    setSize (1200, 600);
     
    
 
@@ -114,19 +116,35 @@ void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 
 void SimpleEQAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
-    
-    
- 
-    
+    const int editorW = getWidth();
+    const int editorH = getHeight();
 
-    //float radius = quarterCircle.getRadius();
-    freqLine.setBounds(0, 0, getWidth(), getHeight());
-    circle.setBounds(300, 200, 400, 400); // Circle now aligns correctly
-    visualizer.setBounds(0, 0, 50, getHeight());
-    
+    const int mainAreaX = 100;
+    const int mainAreaY = 40;
+    const int mainAreaW = 1000;
+    const int mainAreaH = 350;
+
+    const int knobAreaH = 170;
+
+    // Main visual layout
+    juce::Rectangle<int> mainArea(mainAreaX, mainAreaY, mainAreaW, mainAreaH);
+
+    // Set the visualizer to the left 100px of main area
+    visualizer.setBounds(mainArea.removeFromLeft(100)); // 100×350
+
+    // Set the circle (the remaining 900×350)
+    circle.setBounds(mainArea); // Circle will now call resized()
+
+    // Frequency line over the full visual area (same as circle area)
+    freqLine.setBounds(mainAreaX, mainAreaY, mainAreaW, mainAreaH);
+
+    // Knob section pinned to bottom
+    knobSection.setBounds(0, editorH - knobAreaH, editorW, knobAreaH);
 }
+
+
+
+
 void SimpleEQAudioProcessorEditor::timerCallback()
 {
     auto& apvts = audioProcessor.apvts;
