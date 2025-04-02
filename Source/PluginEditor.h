@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "QuarterCircle.h"
+#include "frequencyLines.h"
 
 //struct CustomRotarySlider : juce::Slider
 //{
@@ -45,6 +46,7 @@ private:
     CircleComponent circle;
     frequencyLineComponent freqLine;
     
+    frequencyLines visualizer;
 
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)

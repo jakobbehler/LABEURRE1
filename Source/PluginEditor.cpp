@@ -19,7 +19,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     addAndMakeVisible(circle);
     addAndMakeVisible(freqLine);
     //circle.setBounds(100, 100, 200, 200);  // adjust as needed
-
+    addAndMakeVisible(visualizer);
     setSize (1000, 600);
     
    
@@ -122,6 +122,7 @@ void SimpleEQAudioProcessorEditor::resized()
     //float radius = quarterCircle.getRadius();
     freqLine.setBounds(0, 0, getWidth(), getHeight());
     circle.setBounds(300, 200, 400, 400); // Circle now aligns correctly
+    visualizer.setBounds(0, 0, 50, getHeight());
     
 }
 void SimpleEQAudioProcessorEditor::timerCallback()

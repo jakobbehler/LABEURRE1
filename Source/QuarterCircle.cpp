@@ -332,7 +332,9 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
 {
     if (isDragging)
     {
-        y_position_pixels = juce::jlimit(200.0f, 400.0f, event.position.y);
+        y_position_pixels = juce::jlimit(100.f, 500.f, event.position.y);
+     
+
         updateHerzFromY();  // Updates `herz`
 
         repaint();
@@ -391,13 +393,17 @@ void frequencyLineComponent::setYposition(double y)
 void frequencyLineComponent::updateHerzFromY()
 {
     // You can make this log scale if needed
-    const float minY = 200.0f;
-    const float maxY = 400.0f;
+    const float minY = 100.f;
+    const float maxY = 500.f;
     const float minHz = 20.0f;
     const float maxHz = 20000.0f;
 
     float norm = juce::jlimit(0.0f, 1.0f, (y_position_pixels - minY) / (maxY - minY));
-    float logHz = juce::jmap(norm, std::log10(minHz), std::log10(maxHz));
+    
+    //float logHz = juce::jmap(norm, std::log10(minHz), std::log10(maxHz)); // old
+    
+    float logHz = juce::jmap(1.0f - norm, std::log10(minHz), std::log10(maxHz)); // flipped
+
     herz = std::pow(10.0f, logHz);
 }
 
@@ -416,13 +422,16 @@ void frequencyLineComponent::setHerz(float newHerz)
 
 void frequencyLineComponent::updateYFromHerz()
 {
-    const float minY = 200.0f;
-    const float maxY = 400.0f;
+    const float minY = 100.f;
+    const float maxY = 500.f;
     const float minHz = 20.0f;
     const float maxHz = 20000.0f;
 
     float logHz = std::log10(herz);
     float norm = (logHz - std::log10(minHz)) / (std::log10(maxHz) - std::log10(minHz));
-    y_position_pixels = juce::jmap(norm, minY, maxY);
+    //y_position_pixels = juce::jmap(norm, minY, maxY); //old
+    y_position_pixels = juce::jmap(1.0f - norm, minY, maxY); // flipped
+
 }
+
 
