@@ -16,6 +16,8 @@
           file="Source/frequencyLines.cpp"/>
     <FILE id="sFNOt1" name="frequencyLines.h" compile="0" resource="0"
           file="Source/frequencyLines.h"/>
+    <FILE id="sLjWrT" name="knobSection.cpp" compile="1" resource="0" file="Source/knobSection.cpp"/>
+    <FILE id="B2QAAF" name="knobSection.h" compile="0" resource="0" file="Source/knobSection.h"/>
     <FILE id="fnmvkp" name="QuarterCircle.cpp" compile="1" resource="0"
           file="Source/QuarterCircle.cpp"/>
     <FILE id="Jzg0vl" name="QuarterCircle.h" compile="0" resource="0" file="Source/QuarterCircle.h"/>

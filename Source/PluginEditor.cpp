@@ -20,6 +20,8 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     addAndMakeVisible(freqLine);
     //circle.setBounds(100, 100, 200, 200);  // adjust as needed
     addAndMakeVisible(visualizer);
+    addAndMAkeVisible(knobSection);
+        
     setSize (1000, 600);
     
    
