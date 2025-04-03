@@ -102,36 +102,31 @@ CustomKnobComponent& KnobWithLabel::getKnob() { return knob; }
 
 void KnobWithLabel::paint(juce::Graphics& g)
 {
-    g.setColour(juce::Colours::red);
-    g.drawRect(getLocalBounds());
-    
-    
     if (snapLabels.empty()) return;
 
     auto knobBounds = knob.getBounds().toFloat();
 
-    float width = knobBounds.getWidth();
-    float height = knobBounds.getHeight();
-
-    // Y position where labels should appear above the knob
-    float y = knobBounds.getY() - 25.0f;
+    const float knobX = knobBounds.getX();
+    const float knobWidth = knobBounds.getWidth();
+    const float labelY = 5.0f;          // fixed label Y
+    const float connectorY = knobBounds.getY();  // bottom of line touches knob
 
     g.setFont(12.0f);
-    g.setColour(juce::Colours::white);
 
-    // Loop over all label positions (should be 3 for mode knobs)
     for (auto& [pos, text] : snapLabels)
     {
-        float x = knobBounds.getX() + pos * width;
+        float x = knobX + pos * knobWidth;
 
-        juce::Rectangle<float> labelArea(x - 20, y, 40, 16);  // Centered
+        juce::Rectangle<float> labelArea(x - 25, labelY, 50, 16);
+        auto isDanger = text.containsIgnoreCase("DON'T");
+
+        g.setColour(isDanger ? juce::Colours::orange : juce::Colours::hotpink);
         g.drawFittedText(text, labelArea.toNearestInt(), juce::Justification::centred, 1);
 
-        // Optional: connector line
-        g.setColour(text.containsIgnoreCase("DON'T") ? juce::Colours::orange : juce::Colours::hotpink);
-        g.drawLine(x, y + 16.0f, x, knobBounds.getY(), 1.0f);
+        g.drawLine(x, labelY + 16.0f, x, connectorY, 1.0f);
     }
 }
+
 
 
 //==============================================================================
