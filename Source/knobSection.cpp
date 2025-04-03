@@ -25,9 +25,9 @@ void OtherLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wid
                                         float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                                         juce::Slider& slider)
 {
-    auto radius = (float) juce::jmin(width / 2, height / 2) - 4.0f;
+    auto radius = 25.f;//(float) juce::jmin(width / 2, height / 2) - 4.0f;
     auto centreX = (float) x + (float) width * 0.5f;
-    auto centreY = (float) y + (float) height * 0.5f;
+    auto centreY = (float) y + (float) height * 0.5f + 10.f;
     auto rx = centreX - radius;
     auto ry = centreY - radius;
     auto rw = radius * 2.0f;
@@ -79,10 +79,14 @@ void CustomKnobComponent::paint(juce::Graphics& g)
 }
 
 //==============================================================================
-KnobWithLabel::KnobWithLabel(const juce::String& labelText)
-    : label("label", labelText)
+KnobWithLabel::KnobWithLabel(const juce::String& labelText,
+                             std::vector<std::pair<double, juce::String>> labelPoints)
+    : label("label", labelText), snapLabels(std::move(labelPoints))
 {
     label.setJustificationType(juce::Justification::centred);
+    //label.setFont(14.0f);
+    label.setColour(juce::Label::textColourId, juce::Colours::white);
+
     addAndMakeVisible(label);
     addAndMakeVisible(knob);
 }
@@ -90,27 +94,64 @@ KnobWithLabel::KnobWithLabel(const juce::String& labelText)
 void KnobWithLabel::resized()
 {
     auto area = getLocalBounds();
-    label.setBounds(area.removeFromBottom(20));
+    label.setBounds(area.removeFromBottom(20)); // bottom text
     knob.setBounds(area);
 }
 
 CustomKnobComponent& KnobWithLabel::getKnob() { return knob; }
 
+void KnobWithLabel::paint(juce::Graphics& g)
+{
+    g.setColour(juce::Colours::red);
+    g.drawRect(getLocalBounds());
+    
+    
+    if (snapLabels.empty()) return;
+
+    auto knobBounds = knob.getBounds().toFloat();
+
+    float width = knobBounds.getWidth();
+    float height = knobBounds.getHeight();
+
+    // Y position where labels should appear above the knob
+    float y = knobBounds.getY() - 25.0f;
+
+    g.setFont(12.0f);
+    g.setColour(juce::Colours::white);
+
+    // Loop over all label positions (should be 3 for mode knobs)
+    for (auto& [pos, text] : snapLabels)
+    {
+        float x = knobBounds.getX() + pos * width;
+
+        juce::Rectangle<float> labelArea(x - 20, y, 40, 16);  // Centered
+        g.drawFittedText(text, labelArea.toNearestInt(), juce::Justification::centred, 1);
+
+        // Optional: connector line
+        g.setColour(text.containsIgnoreCase("DON'T") ? juce::Colours::orange : juce::Colours::hotpink);
+        g.drawLine(x, y + 16.0f, x, knobBounds.getY(), 1.0f);
+    }
+}
+
+
 //==============================================================================
 knobSection::knobSection()
-    : compressorKnob("COMP"), distortionKnob("SAT"), highCutKnob("HICUT")
+    : compressionKnob("COMPRESSION", {
+        { 0.0, "GLUE" }, { 0.5, "TAME" }, { 1.0, "OTT" } }),
+      saturationKnob("SATURATION", {
+        { 0.0, "WARM" }, { 0.5, "CRUSH" }, { 1.0, "DON'T!" } }),
+      highcutKnob("HICUT")
 {
-    addAndMakeVisible(compressorKnob);
-    addAndMakeVisible(distortionKnob);
-    addAndMakeVisible(highCutKnob);
+    addAndMakeVisible(compressionKnob);
+    addAndMakeVisible(saturationKnob);
+    addAndMakeVisible(highcutKnob);
 }
 
 knobSection::~knobSection() {}
 
 void knobSection::paint(juce::Graphics& g)
 {
-    juce::Colour bg = juce::Colour::fromString("#FF202426");
-    g.setColour(bg);
+    g.setColour(juce::Colour::fromString("#FF202426"));
     g.fillRect(getLocalBounds());
 
     g.setColour(juce::Colour::fromString("#FFABABAB"));
@@ -119,21 +160,16 @@ void knobSection::paint(juce::Graphics& g)
 
 void knobSection::resized()
 {
-    auto bounds = getLocalBounds();
-    const int labelAreaWidth = 270;
-
-    const int knobSize = 50;
-    const int spacing_1 = 180;
+    const int knobSize = 170;
     const int spacing = 205;
+    const int startX = 270 + 180;
+    const int centerY = getHeight() / 2 - knobSize / 2;
 
-    const int knob_start_1 = labelAreaWidth + spacing_1;
-    const int knob_start_2 = knob_start_1 + knobSize + spacing;
-    const int knob_start_3 = knob_start_2 + knobSize + spacing;
-
-    const int verticalMidPoint = 170 / 2;
-    const int verticalKnobStart = verticalMidPoint - knobSize / 2;
-
-    compressorKnob.setBounds(knob_start_1, verticalKnobStart, knobSize, knobSize + 20);
-    distortionKnob.setBounds(knob_start_2, verticalKnobStart, knobSize, knobSize + 20);
-    highCutKnob.setBounds(knob_start_3, verticalKnobStart, knobSize, knobSize + 20);
+    compressionKnob.setBounds(startX, centerY, knobSize, knobSize);
+    saturationKnob.setBounds(startX + spacing, centerY, knobSize, knobSize);
+    highcutKnob.setBounds(startX + spacing * 2, centerY, knobSize, knobSize);
 }
+
+
+// ===============
+

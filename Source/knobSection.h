@@ -48,11 +48,14 @@ protected:
 };
 
 //==============================================================================
+
 class KnobWithLabel : public juce::Component
 {
 public:
-    KnobWithLabel(const juce::String& labelText);
+    KnobWithLabel(const juce::String& labelText,
+                  std::vector<std::pair<double, juce::String>> labelPoints = {});
 
+    void paint(juce::Graphics&) override;
     void resized() override;
 
     CustomKnobComponent& getKnob();
@@ -60,9 +63,14 @@ public:
 private:
     juce::Label label;
     CustomKnobComponent knob;
+    std::vector<std::pair<double, juce::String>> snapLabels;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(KnobWithLabel)
 };
 
 //==============================================================================
+
+
 class knobSection : public juce::Component
 {
 public:
@@ -73,12 +81,14 @@ public:
     void resized() override;
 
 private:
-    KnobWithLabel compressorKnob;
-    KnobWithLabel distortionKnob;
-    KnobWithLabel highCutKnob;
+    KnobWithLabel compressionKnob;
+    KnobWithLabel saturationKnob;
+    KnobWithLabel highcutKnob;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(knobSection)
 };
 
 // ------
+
+
 
