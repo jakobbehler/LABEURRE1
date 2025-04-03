@@ -1,15 +1,18 @@
 #include <JuceHeader.h>
 #include "QuarterCircle.h"
 
+// CIRCLE VARIABLES GLOBAL
 
+const float smallestR = 60.f;
+const float biggestR = 170.f;
 
 // Constructor: Initialize radius
 QuarterCircle::QuarterCircle(int rotationIndex)
 {
     this->rotation = rotationIndex;  // `this->` clarifies you're assigning to a member variable
     radius = 75.f;
-    smallestRadius = 50.f;
-    biggestRadius = 145.f;
+    smallestRadius = smallestR;
+    biggestRadius = biggestR;
     
 }
 
@@ -108,6 +111,9 @@ void QuarterCircle::paint(juce::Graphics& g)
     g.drawText(text,
                getLocalBounds(),
                juce::Justification::topRight);
+    
+    g.setColour(juce::Colours::green);
+    g.drawRect(getLocalBounds());
 }
 
 
@@ -122,7 +128,7 @@ void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
     
 
     float newRadius = event.position.getDistanceFrom(centerPoint);
-    radius = juce::jlimit(50.f, 145.f, newRadius); // Constrain radius
+    radius = juce::jlimit(smallestR, biggestR, newRadius); // Constrain radius
     
 
     radius = juce::jlimit(smallestRadius,  biggestRadius , newRadius);
@@ -168,85 +174,6 @@ void QuarterCircle::mouseEnter(const juce::MouseEvent& event)
     }
 
 
-//void QuarterCircle::generateGradient()
-//{
-//    int w = getWidth();
-//    int h = getHeight();
-//
-//    gradientImage = juce::Image(juce::Image::RGB, w, h, true);
-//    juce::Graphics g(gradientImage);
-//
-//    juce::ColourGradient gradient(juce::Colours::black, 0, 0,
-//                                  juce::Colours::white, w, h, false);
-//    g.setGradientFill(gradient);
-//    g.fillAll();
-//}
-//
-//float QuarterCircle::halton(int index, int base)
-//{
-//    float result = 0;
-//    float f = 1.0f / base;
-//    int i = index;
-//
-//    while (i > 0)
-//    {
-//        result += f * (i % base);
-//        i = std::floor(i / base);
-//        f /= base;
-//    }
-//
-//    return result;
-//}
-//
-//void QuarterCircle::drawGrain(juce::Graphics& g)
-//{
-//    int w = gradientImage.getWidth();
-//    int h = gradientImage.getHeight();
-//    
-//    float dotSize = 4.0f;  // Max dot size
-//    float density = 1.f;  // Higher density = more grains
-//    float threshold = 0.15f;  // Controls visibility
-//
-//    int area = std::round((w * density) * (h * density));
-//
-//    // **Clip the drawing region to the quarter-circle**
-//    juce::Path clipPath;
-//    float diameter = radius * 2.0f;
-//    float x = getWidth() - radius;
-//    float y = -radius;
-//    juce::Point<float> center(getWidth(), 0.0f);
-//    
-//    clipPath.startNewSubPath(center);
-//    clipPath.addArc(x, y, diameter, diameter,
-//                    juce::MathConstants<float>::pi,
-//                    3 * juce::MathConstants<float>::halfPi, true);
-//    clipPath.lineTo(center);
-//    clipPath.closeSubPath();
-//
-//    g.reduceClipRegion(clipPath);  // **Restrict drawing area to the quarter-circle**
-//
-//    for (int i = 0; i < area; i++)
-//    {
-//        float px = halton(i, 2) * w;
-//        float py = halton(i, 3) * h;
-//
-//        // Get brightness from the gradient
-//        juce::Colour pixelColor = gradientImage.getPixelAt((int)px, (int)py);
-//        float brightness = pixelColor.getBrightness();
-//
-//        brightness = juce::jmap(brightness, 0.0f, 1.0f, 0.0f, 1.0f - threshold);
-//        float pointSize = dotSize * (1.0f - brightness);
-//
-//        if (juce::Random::getSystemRandom().nextFloat() >= brightness)
-//        {
-//            g.setColour(juce::Colours::black);
-//            g.fillEllipse(px, py, pointSize, pointSize);
-//        }
-//    }
-//
-//}
-
-
 // ====================================================================================================================
 // PARENT
 // ===================================================================================================================
@@ -282,16 +209,30 @@ QuarterCircle& CircleComponent::getQuad(int index)
     return quads[index];
 }
 
+void CircleComponent::paint(juce::Graphics& g)
+{
+    
+    g.reduceClipRegion(getLocalBounds()); // ✅ Clip to bounds of CircleComponent
+
+    // Optional debug border:
+    g.setColour(juce::Colours::blue);
+    g.drawRect(getLocalBounds());
+    DBG("[CircleComponent] paint called"); // ✅ check terminal
+}
+
 
 // ====================================================================================================================
-// PARENT
+// FREQ LINE SPLIT
 // ===================================================================================================================
 
+
+const float minY = 0.f;
+const float maxY = 350.f;
 
 
 frequencyLineComponent::frequencyLineComponent()
 {
-    y_position_pixels = 125.f;
+    y_position_pixels = (maxY-minY)*0.5f ;
     isDragging = false;
 }
 
@@ -313,31 +254,18 @@ void frequencyLineComponent::paint(juce::Graphics& g)
 void frequencyLineComponent::resized()
 {
     // Ensure y_position stays inside bounds
-    y_position_pixels = juce::jlimit(210.f, 560.f, y_position_pixels);
+    y_position_pixels = juce::jlimit(minY, maxY, y_position_pixels);
     
     if (y_position_pixels == 0.0f){
         y_position_pixels = getHeight() / 2.0f;
     }
 }
   
-
-
-
-
-
-//void frequencyLineComponent::mouseDown(const juce::MouseEvent& event)
-//    {
-//    float dragThreshold = 10.0f;
-//    // Start dragging only if the mouse is close to the line
-//    if (std::abs(event.position.y - y_position) < dragThreshold)
-//        isDragging = true;
-//}
-
 void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
 {
     if (isDragging)
     {
-        y_position_pixels = juce::jlimit(210.f, 560.f, event.position.y);
+        y_position_pixels = juce::jlimit(minY, maxY, event.position.y);
      
 
         updateHerzFromY();  // Updates `herz`
@@ -348,8 +276,6 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
             onYChanged(herz);  // Only from user drag
     }
 }
-
-
 
     
     void frequencyLineComponent::mouseDown(const juce::MouseEvent& event)
@@ -384,6 +310,8 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
 //}
 
 
+
+
 float frequencyLineComponent::getYposition() const
 {
     return y_position_pixels;
@@ -398,8 +326,7 @@ void frequencyLineComponent::setYposition(double y)
 void frequencyLineComponent::updateHerzFromY()
 {
     // You can make this log scale if needed
-    const float minY = 210.f;
-    const float maxY = 560.f;
+    
     const float minHz = 20.0f;
     const float maxHz = 20000.0f;
 
@@ -427,8 +354,7 @@ void frequencyLineComponent::setHerz(float newHerz)
 
 void frequencyLineComponent::updateYFromHerz()
 {
-    const float minY = 210.f;
-    const float maxY = 560.f;
+
     const float minHz = 20.0f;
     const float maxHz = 20000.0f;
 

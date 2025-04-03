@@ -93,8 +93,8 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
         auto* param = audioProcessor.apvts.getParameter("bandsplit_frequency");
         param->setValueNotifyingHost(param->convertTo0to1(herz));
 
-        float y = freqLine.getYposition(); // 🟢 query directly
-        circle.setTopLeftPosition(300, y - 200);
+        float y = freqLine.getYposition();
+        circle.setTopLeftPosition(100, y - 135);                                                     //⁉️
     };
 
 
@@ -128,12 +128,12 @@ void SimpleEQAudioProcessorEditor::resized()
 
     // Main visual layout
     juce::Rectangle<int> mainArea(mainAreaX, mainAreaY, mainAreaW, mainAreaH);
-
+    
+    circle.setBounds(mainArea); 
+    
     // Set the visualizer to the left 100px of main area
     visualizer.setBounds(mainArea.removeFromLeft(100)); // 100×350
 
-    // Set the circle (the remaining 900×350)
-    circle.setBounds(mainArea); // Circle will now call resized()
 
     // Frequency line over the full visual area (same as circle area)
     freqLine.setBounds(mainAreaX, mainAreaY, mainAreaW, mainAreaH);

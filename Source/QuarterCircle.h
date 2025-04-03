@@ -56,6 +56,8 @@ public:
 
     void resized() override;
     QuarterCircle& getQuad(int index);
+    void paint(juce::Graphics&) override;
+
 
 
 private:
