@@ -108,8 +108,9 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 //==============================================================================
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
+    juce::Colour hell_farb = juce::Colour::fromString("#FFABABAB");
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll(juce::Colours::white);
+    g.fillAll(hell_farb);
 //    g.setFont (juce::FontOptions (15.0f));
 //    g.drawFittedText ("Hello!", getLocalBounds(), juce::Justification::centred, 1);
 }

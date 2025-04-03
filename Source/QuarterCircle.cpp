@@ -25,8 +25,10 @@ QuarterCircle::~QuarterCircle()
 void QuarterCircle::paint(juce::Graphics& g)
 {
     // Background
-    g.fillAll(juce::Colours::white);
-    g.setColour(juce::Colours::black);
+    //g.fillAll(juce::Colours::white);
+    
+    juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
+    g.setColour(dunkel_farb);
 
     const float diameter = radius * 2.0f;
     const float widthF = static_cast<float>(getWidth());
@@ -364,5 +366,8 @@ void frequencyLineComponent::updateYFromHerz()
     y_position_pixels = juce::jmap(1.0f - norm, minY, maxY); // flipped
 
 }
+
+
+
 
 

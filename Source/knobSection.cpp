@@ -16,19 +16,33 @@
 //==============================================================================
 
 
+
+
+
+
+
 CustomKnobComponent::CustomKnobComponent()
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-    addAndMakeVisible(slider);
+    slider.setLookAndFeel(&otherLookAndFeel); // or your own look and feel if defined
+
+    addAndMakeVisible(slider); // this actually shows it
 }
 
-CustomKnobComponent::~CustomKnobComponent() = default;
+CustomKnobComponent::~CustomKnobComponent()
+{
+    slider.setLookAndFeel(nullptr); // avoid dangling pointer
+}
+
 
 
 void CustomKnobComponent::resized()
 {
     slider.setBounds(getLocalBounds());
+    
+    
+    
 }
 
 void CustomKnobComponent::attach(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID)
@@ -40,22 +54,67 @@ void CustomKnobComponent::attach(juce::AudioProcessorValueTreeState& apvts, cons
 
 void CustomKnobComponent::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::white);
+    //g.fillAll(juce::Colours::white);
     
     auto bounds = getLocalBounds();
 
-    // Label
-    g.setColour(juce::Colours::black);
-    g.setFont(14.0f);
-    g.drawText(name, bounds.removeFromTop(20), juce::Justification::centred);
+//    // Label
+//    g.setColour(juce::Colours::black);
+//    g.setFont(14.0f);
+//    g.drawText(name, bounds.removeFromTop(20), juce::Justification::centred);
 
     // Slider
-    auto sliderBounds = bounds.reduced(10);
-    slider.setBounds(sliderBounds);
+    
+    
+    slider.setBounds(bounds);
+    
+    
 }
 
 
+
 //==============================================================================
+
+OtherLookAndFeel::OtherLookAndFeel()
+{
+    setColour(juce::Slider::thumbColourId, juce::Colours::red);
+}
+
+void OtherLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
+                                        float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
+                                        juce::Slider& slider)
+{
+    auto radius = (float) juce::jmin(width / 2, height / 2) - 4.0f;
+    auto centreX = (float) x + (float) width * 0.5f;
+    auto centreY = (float) y + (float) height * 0.5f;
+    auto rx = centreX - radius;
+    auto ry = centreY - radius;
+    auto rw = radius * 2.0f;
+    auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+
+    // fill
+    juce::Colour hell_farb = juce::Colour::fromString("#FFABABAB");
+    juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
+    
+    g.setColour(hell_farb);
+    g.fillEllipse(rx, ry, rw, rw);
+
+    // pointer
+    juce::Path p;
+    auto pointerLength = radius * 0.7f;
+    auto pointerThickness = 2.0f;
+    p.addRectangle(-pointerThickness * 0.5f, -radius, pointerThickness, pointerLength);
+    p.applyTransform(juce::AffineTransform::rotation(angle).translated(centreX, centreY));
+
+    g.setColour(dunkel_farb);
+    g.fillPath(p);
+}
+
+
+
+//==============================================================================
+
+
 
 
 CompressionKnob::CompressionKnob()
@@ -121,9 +180,15 @@ knobSection::knobSection()
 {
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
-    addAndMakeVisible(compressorKnob);
-    addAndMakeVisible(distortionKnob);
-    addAndMakeVisible(highCutKnob);
+    // Add knobs to the component so they are drawn and resized
+        addAndMakeVisible(compressorKnob);
+        addAndMakeVisible(distortionKnob);
+        addAndMakeVisible(highCutKnob);
+
+        // Optional: look and feel (if not handled inside CustomKnobComponent already)
+        compressorKnob.slider.setLookAndFeel(&otherLookAndFeel);
+        distortionKnob.slider.setLookAndFeel(&otherLookAndFeel);
+        highCutKnob.slider.setLookAndFeel(&otherLookAndFeel);
     
                       
 }
@@ -132,26 +197,21 @@ knobSection::~knobSection()
 {
 }
 
-void knobSection::paint (juce::Graphics& g)
+
+
+void knobSection::paint(juce::Graphics& g)
 {
-    /* This demo code just fills the component's background and
-       draws some placeholder text to get you started.
+    // Define your custom background color
+    juce::Colour bg = juce::Colour::fromString("#FF202426");
 
-       You should replace everything in this method with your own
-       drawing code..
-    */
-
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
-
-    g.setColour (juce::Colours::grey);
-    g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
-    g.setColour (juce::Colours::white);
-    g.setFont (juce::FontOptions (14.0f));
-    g.drawText ("knobSection", getLocalBounds(),
-                juce::Justification::centred, true);   // draw some placeholder text
+    // Fill the component's entire bounds
+    g.setColour(bg);
+    g.fillRect(getLocalBounds());
+    g.setColour(juce::Colour::fromString("#FFABABAB"));
+    // Draw vertical line at x = 270
+ 
+    g.drawLine(270.0f, 0.0f, 270.0f, (float)getHeight(), 1.0f);
 }
-
 
 
 void knobSection::resized()
@@ -167,16 +227,25 @@ void knobSection::resized()
     // Knob layout values
    
     const int knobSize = 50;
-    const int spacing1 = 225;
-    const int spacing2 = 130;
-    const int spacing3 = 130;
+    const int spacing_1= 180;
+    const int spacing = 205;
+ 
+    const int knob_start_1 = labelAreaWidth + spacing_1;
+    const int knob_start_2 = knob_start_1 + knobSize + spacing;
+    const int knob_start_3 = knob_start_2 + knobSize + spacing;
     
     const int verticalMidPoint = 170/2;
     const int verticalKnobStart = verticalMidPoint - knobSize/2;
     
 
     // Absolute x positions relative to full component
-    compressorKnob.setBounds(labelAreaWidth + spacing1, verticalKnobStart, knobSize, knobSize);
-    distortionKnob.setBounds(labelAreaWidth + spacing1 + spacing2 + knobSize, verticalKnobStart, knobSize, knobSize);
-    highCutKnob.setBounds(labelAreaWidth + spacing1 + spacing2 + spacing3 + 2*knobSize, verticalKnobStart, knobSize, knobSize);
+    compressorKnob.setBounds(knob_start_1, verticalKnobStart, knobSize, knobSize);
+    distortionKnob.setBounds(knob_start_2, verticalKnobStart, knobSize, knobSize);
+    highCutKnob.setBounds(knob_start_3, verticalKnobStart, knobSize, knobSize);
+    
 }
+
+
+// ======
+
+

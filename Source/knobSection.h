@@ -17,6 +17,16 @@
 */
 
 
+class OtherLookAndFeel : public juce::LookAndFeel_V4
+{
+public:
+    OtherLookAndFeel();
+
+    void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
+                          float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
+                          juce::Slider& slider) override;
+};
+
 
 class CustomKnobComponent : public juce::Component
 {
@@ -28,19 +38,22 @@ public:
     void resized() override;
 
     void attach(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID);
+    juce::Slider slider;
 
 protected:
     
+    OtherLookAndFeel otherLookAndFeel;
 
     juce::String name;
     
+    
     bool shouldSnapToLabels = false;
 
-    juce::Slider slider;
+    
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
 };
 
-
+// ----------------------------------------------------------------------
 
 class CompressionKnob : public CustomKnobComponent
 {
@@ -70,6 +83,8 @@ public:
 };
 
 
+
+// ----------------------------------------------------------------------
 class knobSection  : public juce::Component
 {
 public:
@@ -84,6 +99,12 @@ private:
     SaturationKnob distortionKnob;
     HicutKnob highCutKnob;
     
+    OtherLookAndFeel otherLookAndFeel;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (knobSection)
     
 };
+
+
+// ------
+
