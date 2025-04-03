@@ -112,8 +112,8 @@ void QuarterCircle::paint(juce::Graphics& g)
                getLocalBounds(),
                juce::Justification::topRight);
     
-    g.setColour(juce::Colours::green);
-    g.drawRect(getLocalBounds());
+//    g.setColour(juce::Colours::green);
+//    g.drawRect(getLocalBounds());
 }
 
 
@@ -215,9 +215,9 @@ void CircleComponent::paint(juce::Graphics& g)
     g.reduceClipRegion(getLocalBounds()); // ✅ Clip to bounds of CircleComponent
 
     // Optional debug border:
-    g.setColour(juce::Colours::blue);
-    g.drawRect(getLocalBounds());
-    DBG("[CircleComponent] paint called"); // ✅ check terminal
+//    g.setColour(juce::Colours::blue);
+//    g.drawRect(getLocalBounds());
+//    DBG("[CircleComponent] paint called");
 }
 
 
@@ -247,8 +247,8 @@ void frequencyLineComponent::paint(juce::Graphics& g)
     juce::Rectangle<int> textBounds(getWidth() - 90, y_position_pixels - 15, 100, 30);
     g.drawText(juce::String(herz) + " Hz", textBounds, juce::Justification::left, false);
     
-    g.setColour(juce::Colours::red);
-    g.drawRect(getLocalBounds());
+//    g.setColour(juce::Colours::red);
+//    g.drawRect(getLocalBounds());
 }
 
 void frequencyLineComponent::resized()

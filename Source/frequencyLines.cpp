@@ -35,8 +35,8 @@ void frequencyLines::paint(juce::Graphics& g)
         const int numTicks = 20;
         const float minHz = 20.0f;
         const float maxHz = 20000.0f;
-        const float minY = 100;
-        const float maxY = 500;
+        const float minY = 0;
+        const float maxY = 350;
 
         for (int i = 0; i < numTicks; ++i)
         {
