@@ -184,7 +184,8 @@ void knobSection::paint(juce::Graphics& g)
 
     
 
-        g.drawImage(nameImage, 0, getHeight() - imageHeight, imageWidth, imageHeight, 0, 0, imageWidth, imageHeight);
+        g.drawImageWithin(nameImage, 0, 0, imageWidth, imageHeight, juce::Justification::topLeft);
+
     }
 }
 

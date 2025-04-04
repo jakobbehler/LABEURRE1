@@ -106,14 +106,17 @@ void QuarterCircle::paint(juce::Graphics& g)
 
     // Draw arc
     g.fillPath(path);
-
-    // Label and hover styling
-    g.setColour(isHovered ? juce::Colours::white : juce::Colours::black);
-    juce::String text =juce::String(effectName) + " Radius: " + juce::String(radius);
-    g.drawText(text,
-               getLocalBounds(),
-               juce::Justification::topRight);
     
+    
+    //================ RADIUS LABEL
+
+//    // Label and hover styling
+//    g.setColour(isHovered ? juce::Colours::white : juce::Colours::black);
+//    juce::String text =juce::String(effectName) + " Radius: " + juce::String(radius);
+//    g.drawText(text,
+//               getLocalBounds(),
+//               juce::Justification::topRight);
+//    
 //    g.setColour(juce::Colours::green);
 //    g.drawRect(getLocalBounds());
 }
