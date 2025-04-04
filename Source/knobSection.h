@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "PluginProcessor.h"
 
 //==============================================================================
 class OtherLookAndFeel : public juce::LookAndFeel_V4
@@ -55,13 +56,15 @@ private:
 class knobSection : public juce::Component
 {
 public:
-    knobSection();
+    knobSection(SimpleEQAudioProcessor& proc);
     ~knobSection() override;
 
     void paint(juce::Graphics&) override;
     void resized() override;
 
 private:
+    SimpleEQAudioProcessor& processor;
+
     SnapKnob compressionKnob;
     SnapKnob saturationKnob;
     CustomKnobComponent highcutKnob;

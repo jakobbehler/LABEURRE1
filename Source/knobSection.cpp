@@ -12,12 +12,7 @@
 #include "knobSection.h"
 #include "BinaryData.h"
 
-
-
-
-
 //==============================================================================
-
 
 OtherLookAndFeel::OtherLookAndFeel()
 {
@@ -28,7 +23,7 @@ void OtherLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wid
                                         float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                                         juce::Slider& slider)
 {
-    auto radius = 25.f;//(float) juce::jmin(width / 2, height / 2) - 4.0f;
+    auto radius = 25.f;
     auto centreX = (float) x + (float) width * 0.5f;
     auto centreY = (float) y + (float) height * 0.5f + 10.f;
     auto rx = centreX - radius;
@@ -55,26 +50,16 @@ void OtherLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wid
 //==============================================================================
 CustomKnobComponent::CustomKnobComponent()
 {
-   
-
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
     slider.setLookAndFeel(&otherLookAndFeel);
     addAndMakeVisible(slider);
-    
-    
-    
 }
 
 CustomKnobComponent::~CustomKnobComponent()
 {
     slider.setLookAndFeel(nullptr);
-    
 }
-
-
-
-
 
 void CustomKnobComponent::resized()
 {
@@ -86,30 +71,25 @@ void CustomKnobComponent::attach(juce::AudioProcessorValueTreeState& apvts, cons
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, paramID, slider);
 }
 
-
-// ============================================
-
-
+//==============================================================================
 SnapKnob::SnapKnob()
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-            slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-
-            // Custom lambda for snapping
-            slider.onValueChange = [this]()
-            {
-                double value = slider.getValue();
-                if (snapLabels.empty()) return;
-
-                double closest = snapLabels[0].first;
-                for (auto& [pos, _] : snapLabels)
-                    if (std::abs(pos - value) < std::abs(closest - value))
-                        closest = pos;
-
-                if (value != closest)
-                    slider.setValue(closest, juce::dontSendNotification);
-            };
+    slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
     slider.setRange(0.0, 1.0, 0.01);
+
+    slider.onValueChange = [this]() {
+        double value = slider.getValue();
+        if (snapLabels.empty()) return;
+
+        double closest = snapLabels[0].first;
+        for (auto& [pos, _] : snapLabels)
+            if (std::abs(pos - value) < std::abs(closest - value))
+                closest = pos;
+
+        if (value != closest)
+            slider.setValue(closest, juce::dontSendNotification);
+    };
 }
 
 void SnapKnob::configureSnapPoints(const std::vector<std::pair<double, juce::String>>& labels,
@@ -123,15 +103,14 @@ void SnapKnob::configureSnapPoints(const std::vector<std::pair<double, juce::Str
     img3 = image3;
 }
 
-
 void SnapKnob::paint(juce::Graphics& g)
 {
     const float value = slider.getValue();
     const juce::Image* img = nullptr;
 
-    if (value < 0.5f)
+    if (value < 0.4f)
         img = &img1;
-    else if (value < 0.7f)
+    else if (value < 0.6f)
         img = &img2;
     else
         img = &img3;
@@ -139,14 +118,11 @@ void SnapKnob::paint(juce::Graphics& g)
     if (img && img->isValid())
     {
         auto bounds = getLocalBounds().toFloat();
-
-        // Scale image to full height but maintain aspect ratio
         float targetHeight = bounds.getHeight();
         float aspectRatio = (float)img->getWidth() / (float)img->getHeight();
         float targetWidth = targetHeight * aspectRatio;
 
-        // Center and slightly overlap (negative x to shift left)
-        float x = bounds.getX() - ((targetWidth - bounds.getWidth()) / 2.0f);  // shift left/right
+        float x = bounds.getX() - ((targetWidth - bounds.getWidth()) / 2.0f);
         float y = bounds.getY();
 
         juce::Rectangle<float> targetArea(x, y, targetWidth, targetHeight);
@@ -154,18 +130,9 @@ void SnapKnob::paint(juce::Graphics& g)
     }
 }
 
-
-
-
-//======================================================================================================
-
-        //  KNOB SECTION
-
-//======================================================================================================
-
-knobSection::knobSection()
+//==============================================================================
+knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
 {
-    // Compression knob setup
     juce::Image glue  = juce::ImageCache::getFromMemory(BinaryData::glue_png, BinaryData::glue_pngSize);
     juce::Image tame  = juce::ImageCache::getFromMemory(BinaryData::comp_png, BinaryData::comp_pngSize);
     juce::Image ott   = juce::ImageCache::getFromMemory(BinaryData::ott_png,  BinaryData::ott_pngSize);
@@ -176,8 +143,6 @@ knobSection::knobSection()
         { 0.7, "OTT" }
     }, glue, tame, ott);
 
-
-    // Saturation knob setup
     juce::Image warm   = juce::ImageCache::getFromMemory(BinaryData::WARM_png,   BinaryData::WARM_pngSize);
     juce::Image crush  = juce::ImageCache::getFromMemory(BinaryData::CRUSH_png,  BinaryData::CRUSH_pngSize);
     juce::Image dont   = juce::ImageCache::getFromMemory(BinaryData::DONT_png,   BinaryData::DONT_pngSize);
@@ -188,10 +153,12 @@ knobSection::knobSection()
         { 0.7, "DON'T!" }
     }, warm, crush, dont);
 
-    // Add knobs to the UI
+    compressionKnob.attach(proc.apvts, "compressorSpeed");
+    saturationKnob.attach(proc.apvts, "distortionType");
+
     addAndMakeVisible(compressionKnob);
     addAndMakeVisible(saturationKnob);
-    addAndMakeVisible(highcutKnob);  // basic continuous knob, no images
+    addAndMakeVisible(highcutKnob);
 }
 
 knobSection::~knobSection() {}
@@ -216,7 +183,3 @@ void knobSection::resized()
     saturationKnob.setBounds(startX + spacing, centerY, knobSize, knobSize);
     highcutKnob.setBounds(startX + spacing * 2, centerY, knobSize, knobSize);
 }
-
-
-// ===============
-
