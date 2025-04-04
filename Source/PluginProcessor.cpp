@@ -316,7 +316,7 @@ CompressorSettings SimpleEQAudioProcessor::getCompressorSettings(const double in
     //settings.makeupGain = 1.f - (settings.threshold / settings.ratio) * (1 - (1.0f / settings.ratio));
     
     //settings.makeupGain = 1.f - 4.0*(settings.threshold / settings.ratio) * (1 - (6.0f / settings.ratio));
-    settings.makeupGain = 1.f + 5.7f*(intensity+1.f)*(intensity+1.f);
+    settings.makeupGain = 1.f + 6.f*(intensity+1.f)*(intensity+1.f);
     
     return settings;
     
@@ -346,16 +346,18 @@ void SimpleEQAudioProcessor::updateCompressor()
 {
     const ChainSettings chainSettings = getChainSettings(apvts);
 
+    // Get compressor float value from APVTS
+    float compSpeedRaw = apvts.getRawParameterValue("compressorSpeed")->load();
+
+    // 🧠 Map exact float snap values to int states for processing
+    int compSpeed;
+    if      (compSpeedRaw < 0.4f) compSpeed = 0; // GLUE
+    else if (compSpeedRaw < 0.6f) compSpeed = 1; // TAME
+    else                          compSpeed = 2; // OTT
+
+    // Define compressor settings for both bands
     CompressorSettings lowBandSettings = getCompressorSettings(chainSettings.compLowIntensity);
     CompressorSettings highBandSettings = getCompressorSettings(chainSettings.compHighIntensity);
-
-    const int compSpeed = chainSettings.compressorSpeed;
-
-    // === Placeholder for OTT ===
-    if (compSpeed == 2)
-    {
-        // TODO: Implement OTT-style compression logic here
-    }
 
     // Apply settings to both stereo channels (Compressor + Gain)
     applyCompressorSettings(leftChain.get<1>().get<1>(), leftChain.get<1>().get<2>(), lowBandSettings, compSpeed);  // Low-band
@@ -364,6 +366,7 @@ void SimpleEQAudioProcessor::updateCompressor()
     applyCompressorSettings(rightChain.get<1>().get<1>(), rightChain.get<1>().get<2>(), lowBandSettings, compSpeed); // Low-band
     applyCompressorSettings(rightChain.get<2>().get<1>(), rightChain.get<2>().get<2>(), highBandSettings, compSpeed); // High-band
 }
+
 
 
 
@@ -399,11 +402,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
                                                                  juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
                                                                  0.f));
     
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("compressorSpeed", 1),
-                                                            "Compressor Speed",
-                                                            juce::StringArray{"Fast", "Slow", "OTT"}, // Choices
-                                                            0 ));
-    
+//    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("compressorSpeed", 1),
+//                                                            "Compressor Speed",
+//                                                            juce::StringArray{"Fast", "Slow", "OTT"}, // Choices
+//                                                            0 ));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID("compressorSpeed", 1),
+        "Compressor Speed",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
+        0.3f));
                                                
     
     // DISTORTION ----
@@ -416,12 +423,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
                                                                  juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
                                                                  0.f));
     
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("distortionType", 1),
-                                                            "Compressor Speed",
-                                                            juce::StringArray{"warm", "crush", "dont"}, // Choices
-                                                            0 ));
-    
-    
+//    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("distortionType", 1),
+//                                                            "Compressor Speed",
+//                                                            juce::StringArray{"warm", "crush", "dont"}, // Choices
+//                                                            0 ));
+//
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID("distortionType", 1),
+        "Distortion Type",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
+        0.3f));
+
+        
+
     return layout;
 }
 
@@ -429,8 +443,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
 
 float SimpleEQAudioProcessor::distortionSample(float x, float y_old, float drive, float c)
 {
-    const ChainSettings chainSettings = getChainSettings(apvts);
-    const int distType = chainSettings.distortionType; // Ensure this exists in ChainSettings
+    float distRaw = apvts.getRawParameterValue("distortionType")->load();
+    int distType;
+
+    if      (distRaw < 0.4f) distType = 0; // WARM
+    else if (distRaw < 0.6f) distType = 1; // CRUSH
+    else                    distType = 2; // DON'T!
 
     switch (distType)
     {
@@ -439,11 +457,12 @@ float SimpleEQAudioProcessor::distortionSample(float x, float y_old, float drive
         case 1:
             return distortionCrush(x, y_old, drive, c);
         case 2:
-            return distortionDONT(x, y_old, drive, c);
+            return distortionDONT(x, y_old, drive, c);  // implement this if needed
         default:
             return x;
     }
 }
+
 
 float SimpleEQAudioProcessor::asymmetricSoftClip(float x, float posThreshold, float negThreshold)
 {
@@ -491,25 +510,23 @@ float SimpleEQAudioProcessor::distortionCrush(float x, float y_old, float drive,
 
 float SimpleEQAudioProcessor::distortionDONT(float x, float y_old, float drive, float c)
 {
-//    // Compute signal envelope (RMS-based)
     static float envelope = 0.0f;
-    float alpha = 0.001f; // Smoothing factor (smaller = smoother response)
+    float alpha = 0.001f;
     envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
 
-    // Apply volume-dependent gain scaling (higher volume = more saturation)
     float dynamicDrive = drive * drive * (1.0f + 0.5f * envelope);
-    
-    float scale = 1.0f / (1.0f + (0.3f) * (drive - 1.0f));
-    // Apply soft asymmetric saturation for a warmer tone
-    
-    float warm = distortionWarm( x, y_old,  dynamicDrive,  c);
-    
-    float saturated =scale *std::tanh(dynamicDrive * warm);
-    
-    float saturated2 =scale *std::tanh(dynamicDrive *dynamicDrive* saturated);
-    
-    return saturated2;
+    float scale = 1.0f / (1.0f + 0.3f * (drive - 1.0f));
+
+    float warm = distortionWarm(x, y_old, dynamicDrive, c);
+    float saturated = scale * std::tanh(dynamicDrive * warm);
+    float saturated2 = std::tanh(dynamicDrive * dynamicDrive * saturated);
+
+    // 🔻 Final scaling: As drive increases, output is attenuated more
+    float gainCompensation = juce::jmap(drive, 1.0f, 7.0f, 1.0f, 0.5f);  // from 1.0 to 0.5
+
+    return saturated2 * gainCompensation;
 }
+
 
 
 
