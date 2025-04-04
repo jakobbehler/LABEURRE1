@@ -144,7 +144,8 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     
     float distortionWarm(float x, float y_old, float drive, float c);
     float distortionCrush(float x, float y_old, float drive, float c);
-    
+    float distortionDONT(float x, float y_old, float drive, float c);
+   
     float asymmetricSoftClip(float x, float posThreshold = 1.0f, float negThreshold = -0.8f);
     
     distortionSettings getDistortionSettings(const double intensity);

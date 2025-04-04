@@ -333,8 +333,8 @@ void SimpleEQAudioProcessor::applyCompressorSettings(juce::dsp::Compressor<float
     float fastestAttack = 1000.0f / getSampleRate();
     
     // Attack & Release settings based on compressor speed (0 = Fast, 1 = Slow)
-    const std::array<float, 2> attackTimes = {fastestAttack, 100.0f};  // ms
-    const std::array<float, 2> releaseTimes = {50.0f, 200.0f}; // ms
+    const std::array<float, 3> attackTimes = {fastestAttack, 100.0f, fastestAttack};  // ms
+    const std::array<float, 3> releaseTimes = {50.0f, 200.0f, 60.0f}; // ms
 
     compressor.setAttack(attackTimes[compressorSpeed]);
     compressor.setRelease(releaseTimes[compressorSpeed]);
@@ -344,13 +344,18 @@ void SimpleEQAudioProcessor::applyCompressorSettings(juce::dsp::Compressor<float
 
 void SimpleEQAudioProcessor::updateCompressor()
 {
-    
     const ChainSettings chainSettings = getChainSettings(apvts);
-    // Define compressor settings for both bands
+
     CompressorSettings lowBandSettings = getCompressorSettings(chainSettings.compLowIntensity);
     CompressorSettings highBandSettings = getCompressorSettings(chainSettings.compHighIntensity);
-    
+
     const int compSpeed = chainSettings.compressorSpeed;
+
+    // === Placeholder for OTT ===
+    if (compSpeed == 2)
+    {
+        // TODO: Implement OTT-style compression logic here
+    }
 
     // Apply settings to both stereo channels (Compressor + Gain)
     applyCompressorSettings(leftChain.get<1>().get<1>(), leftChain.get<1>().get<2>(), lowBandSettings, compSpeed);  // Low-band
@@ -359,6 +364,7 @@ void SimpleEQAudioProcessor::updateCompressor()
     applyCompressorSettings(rightChain.get<1>().get<1>(), rightChain.get<1>().get<2>(), lowBandSettings, compSpeed); // Low-band
     applyCompressorSettings(rightChain.get<2>().get<1>(), rightChain.get<2>().get<2>(), highBandSettings, compSpeed); // High-band
 }
+
 
 
 
@@ -395,7 +401,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
     
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("compressorSpeed", 1),
                                                             "Compressor Speed",
-                                                            juce::StringArray{"Fast", "Slow"}, // Choices
+                                                            juce::StringArray{"Fast", "Slow", "OTT"}, // Choices
                                                             0 ));
     
                                                
@@ -412,7 +418,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
     
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("distortionType", 1),
                                                             "Compressor Speed",
-                                                            juce::StringArray{"warm", "crush"}, // Choices
+                                                            juce::StringArray{"warm", "crush", "dont"}, // Choices
                                                             0 ));
     
     
@@ -432,6 +438,8 @@ float SimpleEQAudioProcessor::distortionSample(float x, float y_old, float drive
             return distortionWarm(x, y_old, drive, c);
         case 1:
             return distortionCrush(x, y_old, drive, c);
+        case 2:
+            return distortionDONT(x, y_old, drive, c);
         default:
             return x;
     }
@@ -479,6 +487,28 @@ float SimpleEQAudioProcessor::distortionCrush(float x, float y_old, float drive,
     
 
     return saturated;
+}
+
+float SimpleEQAudioProcessor::distortionDONT(float x, float y_old, float drive, float c)
+{
+//    // Compute signal envelope (RMS-based)
+    static float envelope = 0.0f;
+    float alpha = 0.001f; // Smoothing factor (smaller = smoother response)
+    envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
+
+    // Apply volume-dependent gain scaling (higher volume = more saturation)
+    float dynamicDrive = drive * drive * (1.0f + 0.5f * envelope);
+    
+    float scale = 1.0f / (1.0f + (0.3f) * (drive - 1.0f));
+    // Apply soft asymmetric saturation for a warmer tone
+    
+    float warm = distortionWarm( x, y_old,  dynamicDrive,  c);
+    
+    float saturated =scale *std::tanh(dynamicDrive * warm);
+    
+    float saturated2 =scale *std::tanh(dynamicDrive *dynamicDrive* saturated);
+    
+    return saturated2;
 }
 
 
