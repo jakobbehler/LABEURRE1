@@ -78,64 +78,11 @@ void CustomKnobComponent::paint(juce::Graphics& g)
     // nothing for now
 }
 
-//==============================================================================
-KnobWithLabel::KnobWithLabel(const juce::String& labelText,
-                             std::vector<std::pair<double, juce::String>> labelPoints)
-    : label("label", labelText), snapLabels(std::move(labelPoints))
-{
-    label.setJustificationType(juce::Justification::centred);
-    //label.setFont(14.0f);
-    label.setColour(juce::Label::textColourId, juce::Colours::white);
-
-    addAndMakeVisible(label);
-    addAndMakeVisible(knob);
-}
-
-void KnobWithLabel::resized()
-{
-    auto area = getLocalBounds();
-    label.setBounds(area.removeFromBottom(20)); // bottom text
-    knob.setBounds(area);
-}
-
-CustomKnobComponent& KnobWithLabel::getKnob() { return knob; }
-
-void KnobWithLabel::paint(juce::Graphics& g)
-{
-    if (snapLabels.empty()) return;
-
-    auto knobBounds = knob.getBounds().toFloat();
-
-    const float knobX = knobBounds.getX();
-    const float knobWidth = knobBounds.getWidth();
-    const float labelY = 5.0f;          // fixed label Y
-    const float connectorY = knobBounds.getY();  // bottom of line touches knob
-
-    g.setFont(12.0f);
-
-    for (auto& [pos, text] : snapLabels)
-    {
-        float x = knobX + pos * knobWidth;
-
-        juce::Rectangle<float> labelArea(x - 25, labelY, 50, 16);
-        auto isDanger = text.containsIgnoreCase("DON'T");
-
-        g.setColour(isDanger ? juce::Colours::orange : juce::Colours::hotpink);
-        g.drawFittedText(text, labelArea.toNearestInt(), juce::Justification::centred, 1);
-
-        g.drawLine(x, labelY + 16.0f, x, connectorY, 1.0f);
-    }
-}
-
 
 
 //==============================================================================
 knobSection::knobSection()
-    : compressionKnob("COMPRESSION", {
-        { 0.0, "GLUE" }, { 0.5, "TAME" }, { 1.0, "OTT" } }),
-      saturationKnob("SATURATION", {
-        { 0.0, "WARM" }, { 0.5, "CRUSH" }, { 1.0, "DON'T!" } }),
-      highcutKnob("HICUT")
+    
 {
     addAndMakeVisible(compressionKnob);
     addAndMakeVisible(saturationKnob);
