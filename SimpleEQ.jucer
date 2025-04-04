@@ -12,15 +12,21 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="GRE2kk" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
+    <FILE id="Z0p7b4" name="comp.png" compile="0" resource="1" file="comp.png"/>
+    <FILE id="XwAhJK" name="CRUSH.png" compile="0" resource="1" file="CRUSH.png"/>
+    <FILE id="I5L8y9" name="DONT.png" compile="0" resource="1" file="DONT.png"/>
     <FILE id="t1gpbm" name="frequencyLines.cpp" compile="1" resource="0"
           file="Source/frequencyLines.cpp"/>
     <FILE id="sFNOt1" name="frequencyLines.h" compile="0" resource="0"
           file="Source/frequencyLines.h"/>
+    <FILE id="Cs3mSw" name="glue.png" compile="0" resource="1" file="glue.png"/>
     <FILE id="sLjWrT" name="knobSection.cpp" compile="1" resource="0" file="Source/knobSection.cpp"/>
     <FILE id="B2QAAF" name="knobSection.h" compile="0" resource="0" file="Source/knobSection.h"/>
+    <FILE id="q2UYJT" name="ott.png" compile="0" resource="1" file="ott.png"/>
     <FILE id="fnmvkp" name="QuarterCircle.cpp" compile="1" resource="0"
           file="Source/QuarterCircle.cpp"/>
     <FILE id="Jzg0vl" name="QuarterCircle.h" compile="0" resource="0" file="Source/QuarterCircle.h"/>
+    <FILE id="HiRiGG" name="WARM.png" compile="0" resource="1" file="WARM.png"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>

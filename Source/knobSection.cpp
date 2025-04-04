@@ -10,6 +10,9 @@
 
 #include <JuceHeader.h>
 #include "knobSection.h"
+#include "BinaryData.h"
+
+
 
 
 
@@ -52,16 +55,26 @@ void OtherLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wid
 //==============================================================================
 CustomKnobComponent::CustomKnobComponent()
 {
+   
+
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
     slider.setLookAndFeel(&otherLookAndFeel);
     addAndMakeVisible(slider);
+    
+    
+    
 }
 
 CustomKnobComponent::~CustomKnobComponent()
 {
     slider.setLookAndFeel(nullptr);
+    
 }
+
+
+
+
 
 void CustomKnobComponent::resized()
 {
@@ -73,20 +86,111 @@ void CustomKnobComponent::attach(juce::AudioProcessorValueTreeState& apvts, cons
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, paramID, slider);
 }
 
-void CustomKnobComponent::paint(juce::Graphics& g)
+
+// ============================================
+
+
+SnapKnob::SnapKnob()
 {
-    // nothing for now
+    slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+            slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+
+            // Custom lambda for snapping
+            slider.onValueChange = [this]()
+            {
+                double value = slider.getValue();
+                if (snapLabels.empty()) return;
+
+                double closest = snapLabels[0].first;
+                for (auto& [pos, _] : snapLabels)
+                    if (std::abs(pos - value) < std::abs(closest - value))
+                        closest = pos;
+
+                if (value != closest)
+                    slider.setValue(closest, juce::dontSendNotification);
+            };
+}
+
+void SnapKnob::configureSnapPoints(const std::vector<std::pair<double, juce::String>>& labels,
+                                   const juce::Image& image1,
+                                   const juce::Image& image2,
+                                   const juce::Image& image3)
+{
+    snapLabels = labels;
+    img1 = image1;
+    img2 = image2;
+    img3 = image3;
+}
+
+
+void SnapKnob::paint(juce::Graphics& g)
+{
+    const float value = slider.getValue();
+    const juce::Image* img = nullptr;
+
+    if (value < 0.25f)
+        img = &img1;
+    else if (value < 0.75f)
+        img = &img2;
+    else
+        img = &img3;
+
+    if (img && img->isValid())
+    {
+        auto bounds = getLocalBounds().toFloat();
+
+        // Scale image to full height but maintain aspect ratio
+        float targetHeight = bounds.getHeight();
+        float aspectRatio = (float)img->getWidth() / (float)img->getHeight();
+        float targetWidth = targetHeight * aspectRatio;
+
+        // Center and slightly overlap (negative x to shift left)
+        float x = bounds.getX() - ((targetWidth - bounds.getWidth()) / 2.0f);  // shift left/right
+        float y = bounds.getY();
+
+        juce::Rectangle<float> targetArea(x, y, targetWidth, targetHeight);
+        g.drawImage(*img, targetArea);
+    }
 }
 
 
 
-//==============================================================================
+
+//======================================================================================================
+
+        //  KNOB SECTION
+
+//======================================================================================================
+
 knobSection::knobSection()
-    
 {
+    // Compression knob setup
+    juce::Image glue  = juce::ImageCache::getFromMemory(BinaryData::glue_png, BinaryData::glue_pngSize);
+    juce::Image tame  = juce::ImageCache::getFromMemory(BinaryData::comp_png, BinaryData::comp_pngSize);
+    juce::Image ott   = juce::ImageCache::getFromMemory(BinaryData::ott_png,  BinaryData::ott_pngSize);
+
+    compressionKnob.configureSnapPoints({
+        { 0.0, "GLUE" },
+        { 0.5, "TAME" },
+        { 1.0, "OTT" }
+    }, glue, tame, ott);
+
+
+    // Saturation knob setup
+    juce::Image warm   = juce::ImageCache::getFromMemory(BinaryData::WARM_png,   BinaryData::WARM_pngSize);
+    juce::Image crush  = juce::ImageCache::getFromMemory(BinaryData::CRUSH_png,  BinaryData::CRUSH_pngSize);
+    juce::Image dont   = juce::ImageCache::getFromMemory(BinaryData::DONT_png,   BinaryData::DONT_pngSize);
+
+    saturationKnob.configureSnapPoints({
+        { 0.0, "WARM" },
+        { 0.5, "CRUSH" },
+        { 1.0, "DON'T!" }
+    }, warm, crush, dont);
+
+    // Add knobs to the UI
     addAndMakeVisible(compressionKnob);
     addAndMakeVisible(saturationKnob);
-    addAndMakeVisible(highcutKnob);
+    addAndMakeVisible(highcutKnob);  // basic continuous knob, no images
 }
 
 knobSection::~knobSection() {}
