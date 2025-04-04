@@ -133,6 +133,9 @@ void SnapKnob::paint(juce::Graphics& g)
 //==============================================================================
 knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
 {
+    nameImage = juce::ImageCache::getFromMemory(BinaryData::name_png, BinaryData::name_pngSize);
+
+    
     juce::Image glue  = juce::ImageCache::getFromMemory(BinaryData::glue_png, BinaryData::glue_pngSize);
     juce::Image tame  = juce::ImageCache::getFromMemory(BinaryData::comp_png, BinaryData::comp_pngSize);
     juce::Image ott   = juce::ImageCache::getFromMemory(BinaryData::ott_png,  BinaryData::ott_pngSize);
@@ -159,6 +162,7 @@ knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
     addAndMakeVisible(compressionKnob);
     addAndMakeVisible(saturationKnob);
     addAndMakeVisible(highcutKnob);
+    
 }
 
 knobSection::~knobSection() {}
@@ -170,7 +174,20 @@ void knobSection::paint(juce::Graphics& g)
 
     g.setColour(juce::Colour::fromString("#FFABABAB"));
     g.drawLine(270.0f, 0.0f, 270.0f, (float)getHeight(), 1.0f);
+
+    // 👇 Draw name.png bottom-left
+    if (nameImage.isValid())
+    {
+
+        int imageWidth = 270.f;
+        int imageHeight = 350.f;
+
+    
+
+        g.drawImage(nameImage, 0, getHeight() - imageHeight, imageWidth, imageHeight, 0, 0, imageWidth, imageHeight);
+    }
 }
+
 
 void knobSection::resized()
 {

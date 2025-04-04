@@ -56,6 +56,7 @@ private:
 class knobSection : public juce::Component
 {
 public:
+    
     knobSection(SimpleEQAudioProcessor& proc);
     ~knobSection() override;
 
@@ -68,6 +69,8 @@ private:
     SnapKnob compressionKnob;
     SnapKnob saturationKnob;
     CustomKnobComponent highcutKnob;
+    
+    juce::Image nameImage;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(knobSection)
 };

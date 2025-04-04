@@ -22,6 +22,7 @@
     <FILE id="Cs3mSw" name="glue.png" compile="0" resource="1" file="glue.png"/>
     <FILE id="sLjWrT" name="knobSection.cpp" compile="1" resource="0" file="Source/knobSection.cpp"/>
     <FILE id="B2QAAF" name="knobSection.h" compile="0" resource="0" file="Source/knobSection.h"/>
+    <FILE id="emIE4v" name="name.png" compile="0" resource="1" file="name.png"/>
     <FILE id="q2UYJT" name="ott.png" compile="0" resource="1" file="ott.png"/>
     <FILE id="fnmvkp" name="QuarterCircle.cpp" compile="1" resource="0"
           file="Source/QuarterCircle.cpp"/>
