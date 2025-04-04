@@ -109,6 +109,7 @@ SnapKnob::SnapKnob()
                 if (value != closest)
                     slider.setValue(closest, juce::dontSendNotification);
             };
+    slider.setRange(0.0, 1.0, 0.01);
 }
 
 void SnapKnob::configureSnapPoints(const std::vector<std::pair<double, juce::String>>& labels,
@@ -128,9 +129,9 @@ void SnapKnob::paint(juce::Graphics& g)
     const float value = slider.getValue();
     const juce::Image* img = nullptr;
 
-    if (value < 0.25f)
+    if (value < 0.5f)
         img = &img1;
-    else if (value < 0.75f)
+    else if (value < 0.7f)
         img = &img2;
     else
         img = &img3;
@@ -170,9 +171,9 @@ knobSection::knobSection()
     juce::Image ott   = juce::ImageCache::getFromMemory(BinaryData::ott_png,  BinaryData::ott_pngSize);
 
     compressionKnob.configureSnapPoints({
-        { 0.0, "GLUE" },
+        { 0.3, "GLUE" },
         { 0.5, "TAME" },
-        { 1.0, "OTT" }
+        { 0.7, "OTT" }
     }, glue, tame, ott);
 
 
@@ -182,9 +183,9 @@ knobSection::knobSection()
     juce::Image dont   = juce::ImageCache::getFromMemory(BinaryData::DONT_png,   BinaryData::DONT_pngSize);
 
     saturationKnob.configureSnapPoints({
-        { 0.0, "WARM" },
+        { 0.3, "WARM" },
         { 0.5, "CRUSH" },
-        { 1.0, "DON'T!" }
+        { 0.7, "DON'T!" }
     }, warm, crush, dont);
 
     // Add knobs to the UI
