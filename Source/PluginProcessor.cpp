@@ -86,7 +86,7 @@ const juce::String SimpleEQAudioProcessor::getProgramName (int index)
     return {};
 }
 
-void SimpleEQAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void SimpleEQAudioProcessor::changeProgramName (int index, const juce::String& newName)  // &  referfence zu
 {
 }
 
@@ -94,30 +94,28 @@ void SimpleEQAudioProcessor::changeProgramName (int index, const juce::String& n
 // PREPARE TO PLAY
 //==============================================================================
 
-void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void SimpleEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // Initialize left and right channel and their DSP chains
+
+
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
     spec.sampleRate = sampleRate;
-    
+
     leftChain.prepare(spec);
     rightChain.prepare(spec);
-    
-   
-    
+
     float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
 
-    // Set crossover filter cutoff
     leftChain.get<0>().setCutoffFrequency(crossoverFreq);
     rightChain.get<0>().setCutoffFrequency(crossoverFreq);
-    
+
+    // Setup high cut filter coefficients (you already have updateFilter for this)
+    updateFilter();
     updateCompressor();
-    
-    //*lowPassFilter.state = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 5000.0f);
-    
 }
+
 
 
 
@@ -164,6 +162,7 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 
 
     updateCompressor();
+    updateFilter();
     
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -213,7 +212,7 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             float lowSample, highSample;
             chain.get<0>().processSample(channel, inputSample, lowSample, highSample);
 
-            // 🎸 Apply tape distortion
+            //  Apply tape distortion
             lowSample = distortionSample(lowSample, y_old_low, lowSettings.drive, lowSettings.c);
             highSample = distortionSample(highSample, y_old_high, highSettings.drive, highSettings.c);
 
@@ -230,7 +229,13 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             highSample = chain.get<2>().get<2>().processSample(highSample);
 
             // 🎚 Sum processed bands
-            channelData[sample] = lowSample + highSample;
+            //channelData[sample] = lowSample + highSample;
+            
+            // 🎚 Sum processed bands
+            float outputSample = lowSample + highSample;
+            outputSample = chain.get<3>().processSample(outputSample); // Apply high-cut filter
+            channelData[sample] = outputSample;
+
         }
     }
 }
@@ -296,7 +301,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
     settings.compressorSpeed = static_cast<int>(apvts.getRawParameterValue("compressorSpeed")->load());
     settings.distortionType = static_cast<int>(apvts.getRawParameterValue("distortionType")->load());
 
-    
+    settings.highCutFreq = static_cast<int>(apvts.getRawParameterValue("highCutFreq")->load());
     return settings;
 }
 
@@ -367,6 +372,16 @@ void SimpleEQAudioProcessor::updateCompressor()
     applyCompressorSettings(rightChain.get<2>().get<1>(), rightChain.get<2>().get<2>(), highBandSettings, compSpeed); // High-band
 }
 
+void SimpleEQAudioProcessor::updateFilter()
+{
+    float cutoff = apvts.getRawParameterValue("highCutFreq")->load();
+    auto coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(getSampleRate(), cutoff);
+
+    *leftChain.get<3>().coefficients = *coefficients;
+    *rightChain.get<3>().coefficients = *coefficients;
+    DBG("🔀 HighCut: " << cutoff << " Hz");
+}
+
 
 
 
@@ -434,6 +449,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
         juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
         0.3f));
 
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("highCutFreq", 1),
+                                                                 "highCutFreq",
+                                                                 juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
+                                                                20000.f));
         
 
     return layout;
@@ -543,6 +562,7 @@ distortionSettings SimpleEQAudioProcessor::getDistortionSettings(const double in
     
     return settings;
 }
+
 
 
 //==============================================================================

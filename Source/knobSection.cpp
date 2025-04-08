@@ -158,6 +158,8 @@ knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
 
     compressionKnob.attach(proc.apvts, "compressorSpeed");
     saturationKnob.attach(proc.apvts, "distortionType");
+    highcutKnob.attach(proc.apvts, "highCutFreq");
+
 
     addAndMakeVisible(compressionKnob);
     addAndMakeVisible(saturationKnob);

@@ -16,7 +16,7 @@
 // A structure containing all the parameters of the plugin
 struct ChainSettings
 {
-    float bandsplit_frequency {0},  compLowIntensity {0}, compHighIntensity {0}, distLowIntensity {0}, distHighIntensity {0};
+    float bandsplit_frequency {0},  compLowIntensity {0}, compHighIntensity {0}, distLowIntensity {0}, distHighIntensity {0}, highCutFreq {0};
     int compressorSpeed {0}, distortionType {0} ;
     //float lowCutFreq{0}, highCutFreq{0};
     
@@ -44,7 +44,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 */
 class SimpleEQAudioProcessor  : public juce::AudioProcessor
 {
-    public:
+public:
     //==============================================================================
     SimpleEQAudioProcessor();
     ~SimpleEQAudioProcessor() override;
@@ -93,7 +93,7 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     
     
     
-    private:
+private:
     
     // Type Aliases and Processor Chains
 
@@ -116,8 +116,8 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     using MultiBandCompressorChain = juce::dsp::ProcessorChain<
         Crossover, // Band-splitter
         LowBandChain,
-        HighBandChain
-        
+        HighBandChain,
+        Filter
     >;
 
    
@@ -138,6 +138,7 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     void applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings, int compressorSpeed);
     void updateCompressor();
     
+    void updateFilter();
     // DISTORTION METHODS -----------------------------
     
     float distortionSample(float x, float y_old, float drive, float c);
