@@ -74,15 +74,22 @@ void CustomKnobComponent::paint(juce::Graphics& g)
     if (backgroundImage.isValid())
     {
         auto bounds = getLocalBounds().toFloat();
+        
+        float aspectRatio = (float)backgroundImage.getWidth() / (float)backgroundImage.getHeight();
         float targetHeight = bounds.getHeight();
-        float aspectRatio = (float)backgroundImage.getWidth() / backgroundImage.getHeight();
         float targetWidth = targetHeight * aspectRatio;
 
-        float x = bounds.getX() - ((targetWidth - bounds.getWidth()) / 2.0f) + 3.f;
-        float y = bounds.getY();
+        // Clamp width to bounds
+        if (targetWidth > bounds.getWidth())
+        {
+            targetWidth = bounds.getWidth();
+            targetHeight = targetWidth / aspectRatio;
+        }
 
-        juce::Rectangle<float> targetArea(x, y, targetWidth, targetHeight);
-        g.drawImage(backgroundImage, targetArea);
+        float x = bounds.getCentreX() - targetWidth / 2.0f;
+        float y = bounds.getCentreY() - targetHeight / 2.0f;
+
+        g.drawImage(backgroundImage, x, y, targetWidth, targetHeight, 0, 0, backgroundImage.getWidth(), backgroundImage.getHeight());
     }
 }
 
@@ -131,6 +138,33 @@ void SnapKnob::configureSnapPoints(const std::vector<std::pair<double, juce::Str
     img3 = image3;
 }
 
+//void SnapKnob::paint(juce::Graphics& g)
+//{
+//    const float value = slider.getValue();
+//    const juce::Image* img = nullptr;
+//
+//    if (value < 0.4f)
+//        img = &img1;
+//    else if (value < 0.6f)
+//        img = &img2;
+//    else
+//        img = &img3;
+//
+//    if (img && img->isValid())
+//    {
+//        auto bounds = getLocalBounds().toFloat();
+//        float targetHeight = bounds.getHeight();
+//        float aspectRatio = (float)img->getWidth() / (float)img->getHeight();
+//        float targetWidth = targetHeight * aspectRatio;
+//
+//        float x = bounds.getX() - ((targetWidth - bounds.getWidth()) / 2.0f);
+//        float y = bounds.getY();
+//
+//        juce::Rectangle<float> targetArea(x, y, targetWidth, targetHeight);
+//        g.drawImage(*img, targetArea);
+//    }
+//}
+
 void SnapKnob::paint(juce::Graphics& g)
 {
     const float value = slider.getValue();
@@ -146,17 +180,25 @@ void SnapKnob::paint(juce::Graphics& g)
     if (img && img->isValid())
     {
         auto bounds = getLocalBounds().toFloat();
+        
         float targetHeight = bounds.getHeight();
         float aspectRatio = (float)img->getWidth() / (float)img->getHeight();
         float targetWidth = targetHeight * aspectRatio;
 
-        float x = bounds.getX() - ((targetWidth - bounds.getWidth()) / 2.0f);
-        float y = bounds.getY();
+        // Clamp image width to not exceed bounds
+        if (targetWidth > bounds.getWidth())
+        {
+            targetWidth = bounds.getWidth();
+            targetHeight = targetWidth / aspectRatio;
+        }
 
-        juce::Rectangle<float> targetArea(x, y, targetWidth, targetHeight);
-        g.drawImage(*img, targetArea);
+        float x = bounds.getCentreX() - targetWidth / 2.0f;
+        float y = bounds.getCentreY() - targetHeight / 2.0f;
+
+        g.drawImage(*img, x, y, targetWidth, targetHeight, 0, 0, img->getWidth(), img->getHeight());
     }
 }
+
 
 //==============================================================================
 knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
@@ -174,9 +216,9 @@ knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
         { 0.7, "OTT" }
     }, glue, tame, ott);
 
-    juce::Image warm   = juce::ImageCache::getFromMemory(BinaryData::WARM_png,   BinaryData::WARM_pngSize);
-    juce::Image crush  = juce::ImageCache::getFromMemory(BinaryData::CRUSH_png,  BinaryData::CRUSH_pngSize);
-    juce::Image dont   = juce::ImageCache::getFromMemory(BinaryData::DONT_png,   BinaryData::DONT_pngSize);
+    juce::Image warm   = juce::ImageCache::getFromMemory(BinaryData::warm_png,   BinaryData::warm_pngSize);
+    juce::Image crush  = juce::ImageCache::getFromMemory(BinaryData::crush_png,  BinaryData::crush_pngSize);
+    juce::Image dont   = juce::ImageCache::getFromMemory(BinaryData::dont_png,   BinaryData::dont_pngSize);
 
     saturationKnob.configureSnapPoints({
         { 0.3, "WARM" },
@@ -223,14 +265,30 @@ void knobSection::paint(juce::Graphics& g)
 }
 
 
+//void knobSection::resized()
+//{
+//    const int knobSize = 170;
+//    const int spacing = 205;
+//    const int startX = 270 + 180;
+//    const int centerY = getHeight() / 2 - knobSize / 2;
+//
+//    compressionKnob.setBounds(startX, centerY, knobSize, knobSize);
+//    saturationKnob.setBounds(startX + spacing, centerY, knobSize, knobSize);
+//    highcutKnob.setBounds(startX + spacing * 2, centerY, knobSize, knobSize);
+//}
+
 void knobSection::resized()
 {
-    const int knobSize = 170;
-    const int spacing = 205;
-    const int startX = 270 + 180;
-    const int centerY = getHeight() / 2 - knobSize / 2;
+    const int knobComponentWidth = 420; // 180px left + 50px knob + 180px right
+    const int knobHeight = 350;         // same height so background image stays proportional
+    const int spacing = -158;             // overlap!
+    
+    // no extra spacing needed between components
+    
+    const int startX = 270;             // account for name image on left
+    const int centerY = getHeight() / 2 - knobHeight / 2;
 
-    compressionKnob.setBounds(startX, centerY, knobSize, knobSize);
-    saturationKnob.setBounds(startX + spacing, centerY, knobSize, knobSize);
-    highcutKnob.setBounds(startX + spacing * 2, centerY, knobSize, knobSize);
+    compressionKnob.setBounds(startX, centerY, knobComponentWidth, knobHeight);
+    saturationKnob.setBounds(startX + knobComponentWidth + spacing, centerY, knobComponentWidth, knobHeight);
+    highcutKnob.setBounds(startX + (knobComponentWidth + spacing) * 2, centerY, knobComponentWidth, knobHeight);
 }
