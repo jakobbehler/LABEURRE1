@@ -23,12 +23,17 @@ public:
 
     //void paint(juce::Graphics&) override;
     void resized() override;
+    void paint(juce::Graphics&) override;
 
     void attach(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID);
+    void setBackgroundImage(const juce::Image& img);
+   
 
 protected:
     juce::Slider slider;
     OtherLookAndFeel otherLookAndFeel;
+    juce::Image backgroundImage;
+
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
 };

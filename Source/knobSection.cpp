@@ -53,6 +53,9 @@ CustomKnobComponent::CustomKnobComponent()
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
     slider.setLookAndFeel(&otherLookAndFeel);
+    
+    
+
     addAndMakeVisible(slider);
 }
 
@@ -66,10 +69,35 @@ void CustomKnobComponent::resized()
     slider.setBounds(getLocalBounds());
 }
 
+void CustomKnobComponent::paint(juce::Graphics& g)
+{
+    if (backgroundImage.isValid())
+    {
+        auto bounds = getLocalBounds().toFloat();
+        float targetHeight = bounds.getHeight();
+        float aspectRatio = (float)backgroundImage.getWidth() / backgroundImage.getHeight();
+        float targetWidth = targetHeight * aspectRatio;
+
+        float x = bounds.getX() - ((targetWidth - bounds.getWidth()) / 2.0f) + 3.f;
+        float y = bounds.getY();
+
+        juce::Rectangle<float> targetArea(x, y, targetWidth, targetHeight);
+        g.drawImage(backgroundImage, targetArea);
+    }
+}
+
+
 void CustomKnobComponent::attach(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID)
 {
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, paramID, slider);
 }
+
+void CustomKnobComponent::setBackgroundImage(const juce::Image& img)
+{
+    backgroundImage = img;
+}
+
+
 
 //==============================================================================
 SnapKnob::SnapKnob()
@@ -155,6 +183,9 @@ knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
         { 0.5, "CRUSH" },
         { 0.7, "DON'T!" }
     }, warm, crush, dont);
+    
+    juce::Image hiCutImg = juce::ImageCache::getFromMemory(BinaryData::hicut_png, BinaryData::hicut_pngSize);
+    highcutKnob.setBackgroundImage(hiCutImg);
 
     compressionKnob.attach(proc.apvts, "compressorSpeed");
     saturationKnob.attach(proc.apvts, "distortionType");

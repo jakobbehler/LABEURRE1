@@ -20,6 +20,7 @@
     <FILE id="sFNOt1" name="frequencyLines.h" compile="0" resource="0"
           file="Source/frequencyLines.h"/>
     <FILE id="Cs3mSw" name="glue.png" compile="0" resource="1" file="glue.png"/>
+    <FILE id="CPpU2s" name="hicut.png" compile="0" resource="1" file="../../hicut.png"/>
     <FILE id="sLjWrT" name="knobSection.cpp" compile="1" resource="0" file="Source/knobSection.cpp"/>
     <FILE id="B2QAAF" name="knobSection.h" compile="0" resource="0" file="Source/knobSection.h"/>
     <FILE id="emIE4v" name="name.png" compile="0" resource="1" file="name.png"/>
