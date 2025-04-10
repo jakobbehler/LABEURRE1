@@ -97,7 +97,6 @@ void SimpleEQAudioProcessor::changeProgramName (int index, const juce::String& n
 void SimpleEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 
-
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
@@ -111,7 +110,6 @@ void SimpleEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     leftChain.get<0>().setCutoffFrequency(crossoverFreq);
     rightChain.get<0>().setCutoffFrequency(crossoverFreq);
 
-    // Setup high cut filter coefficients (you already have updateFilter for this)
     updateFilter();
     updateCompressor();
 }
@@ -174,11 +172,10 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     distortionSettings highSettings = getDistortionSettings(distHigh);
     distortionSettings lowSettings = getDistortionSettings(distLow);
 
-    // Ensure the extra output channels are cleared
+    // CLEAR EXTRA OUTPUT CHANNELS
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    // Get real-time crossover frequency
     float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
     
     // DEBUG
@@ -190,7 +187,7 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
         lastFreq = crossoverFreq;
     }
 
-    //---
+    // _-------------------
     leftChain.get<0>().setCutoffFrequency(crossoverFreq);
     rightChain.get<0>().setCutoffFrequency(crossoverFreq);
 
@@ -200,7 +197,7 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
         auto* channelData = buffer.getWritePointer(channel);
         auto& chain = (channel == 0) ? leftChain : rightChain;
 
-        // Store previous samples for hysteresis feedback
+        // Store previous samples for hysteresis feedback (TO IMPLEMENT IN DISTORTION)
         float y_old_low = 0.f;
         float y_old_high = 0.f;
 
@@ -212,26 +209,23 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             float lowSample, highSample;
             chain.get<0>().processSample(channel, inputSample, lowSample, highSample);
 
-            //  Apply tape distortion
+            //  Apply distortion
             lowSample = distortionSample(lowSample, y_old_low, lowSettings.drive, lowSettings.c);
             highSample = distortionSample(highSample, y_old_high, highSettings.drive, highSettings.c);
 
-            // Store previous output for hysteresis feedback
+            // Store previous output for hysteresis feedback (TO IMPLEMENT)
             y_old_low = lowSample;
             y_old_high = highSample;
 
-            // 🎛 Apply compression to each band
+            // compression onn each band
             lowSample = chain.get<1>().get<1>().processSample(channel, lowSample);
             highSample = chain.get<2>().get<1>().processSample(channel, highSample);
 
-            // 🔊 Apply Gain (Makeup Compensation)
+            // Gain (Makeup for comp)
             lowSample = chain.get<1>().get<2>().processSample(lowSample);
             highSample = chain.get<2>().get<2>().processSample(highSample);
 
-            // 🎚 Sum processed bands
-            //channelData[sample] = lowSample + highSample;
-            
-            // 🎚 Sum processed bands
+            //Sum processed bands
             float outputSample = lowSample + highSample;
             outputSample = chain.get<3>().processSample(outputSample); // Apply high-cut filter
             channelData[sample] = outputSample;
@@ -354,7 +348,7 @@ void SimpleEQAudioProcessor::updateCompressor()
     // Get compressor float value from APVTS
     float compSpeedRaw = apvts.getRawParameterValue("compressorSpeed")->load();
 
-    // 🧠 Map exact float snap values to int states for processing
+    // Map exact float snap values to int states for processing
     int compSpeed;
     if      (compSpeedRaw < 0.4f) compSpeed = 0; // GLUE
     else if (compSpeedRaw < 0.6f) compSpeed = 1; // TAME
@@ -379,6 +373,8 @@ void SimpleEQAudioProcessor::updateFilter()
 
     *leftChain.get<3>().coefficients = *coefficients;
     *rightChain.get<3>().coefficients = *coefficients;
+    
+    //DEBUGGING
     DBG("🔀 HighCut: " << cutoff << " Hz");
 }
 
@@ -392,8 +388,6 @@ void SimpleEQAudioProcessor::updateCoefficients(Coefficients& old, const Coeffic
 {
     *old = *replacements;
 }
-
-
 
 // CREATING PARAMETERS ---------------------------------------------------------
 
@@ -417,10 +411,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
                                                                  juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
                                                                  0.f));
     
-//    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("compressorSpeed", 1),
-//                                                            "Compressor Speed",
-//                                                            juce::StringArray{"Fast", "Slow", "OTT"}, // Choices
-//                                                            0 ));
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID("compressorSpeed", 1),
         "Compressor Speed",
@@ -438,11 +428,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
                                                                  juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
                                                                  0.f));
     
-//    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID("distortionType", 1),
-//                                                            "Compressor Speed",
-//                                                            juce::StringArray{"warm", "crush", "dont"}, // Choices
-//                                                            0 ));
-//
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID("distortionType", 1),
         "Distortion Type",
@@ -476,7 +461,7 @@ float SimpleEQAudioProcessor::distortionSample(float x, float y_old, float drive
         case 1:
             return distortionCrush(x, y_old, drive, c);
         case 2:
-            return distortionDONT(x, y_old, drive, c);  // implement this if needed
+            return distortionDONT(x, y_old, drive, c);
         default:
             return x;
     }
@@ -495,30 +480,29 @@ float SimpleEQAudioProcessor::asymmetricSoftClip(float x, float posThreshold, fl
 float SimpleEQAudioProcessor::distortionWarm(float x, float y_old, float drive, float c)
 {
  
-    // Soft clipping function (prevents hard digital clipping)
+
     float softClip = std::tanh(drive * x);
 
-    // Harmonic Enhancement: Adds gentle tube-style warmth
     softClip += 0.15f * softClip * softClip * softClip;
     
     float scale = 1.0f / (1.0f + (0.295f) * (drive - 1.0f));
+    
     return scale * softClip;
 }
 
 
 float SimpleEQAudioProcessor::distortionCrush(float x, float y_old, float drive, float c)
 {
-//    // Compute signal envelope (RMS-based)
+    // signal envelope (RMS-based)
     static float envelope = 0.0f;
-    float alpha = 0.001f; // Smoothing factor (smaller = smoother response)
+    float alpha = 0.001f; // Smoothing factor
     envelope = (1.0f - alpha) * envelope + alpha * std::fabs(x);
 
-    // Apply volume-dependent gain scaling (higher volume = more saturation)
+    // volume-dependent gain scaling (higher volume = more saturation)
     float dynamicDrive = drive * (1.0f + 0.5f * envelope);
     
     float scale = 1.0f / (1.0f + (0.3f) * (drive - 1.0f));
-    // Apply soft asymmetric saturation for a warmer tone
-    
+ 
     float warm = distortionWarm( x, y_old,  dynamicDrive,  c);
     
     float saturated =scale *std::tanh(dynamicDrive * warm);
@@ -540,11 +524,10 @@ float SimpleEQAudioProcessor::distortionDONT(float x, float y_old, float drive, 
     float saturated = scale * std::tanh(dynamicDrive * warm);
     float saturated2 = std::tanh(dynamicDrive * dynamicDrive * saturated);
 
-    // 🔻 Final scaling: As drive increases, output is attenuated more
+    // turn down volume with higher drives!
     float gainCompensation = juce::jmap(drive, 1.0f, 7.0f, 0.5f, 0.15f);  // from 1.0 to 0.5
 
-
-    gainCompensation = std::pow(gainCompensation, 1.1f);  // Optional tweak
+    gainCompensation = std::pow(gainCompensation, 1.1f); // COMPENSATION CURVE --> NONLINEAR (TO TWEAK)
 
     return saturated2 * gainCompensation;
 }

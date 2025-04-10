@@ -138,33 +138,6 @@ void SnapKnob::configureSnapPoints(const std::vector<std::pair<double, juce::Str
     img3 = image3;
 }
 
-//void SnapKnob::paint(juce::Graphics& g)
-//{
-//    const float value = slider.getValue();
-//    const juce::Image* img = nullptr;
-//
-//    if (value < 0.4f)
-//        img = &img1;
-//    else if (value < 0.6f)
-//        img = &img2;
-//    else
-//        img = &img3;
-//
-//    if (img && img->isValid())
-//    {
-//        auto bounds = getLocalBounds().toFloat();
-//        float targetHeight = bounds.getHeight();
-//        float aspectRatio = (float)img->getWidth() / (float)img->getHeight();
-//        float targetWidth = targetHeight * aspectRatio;
-//
-//        float x = bounds.getX() - ((targetWidth - bounds.getWidth()) / 2.0f);
-//        float y = bounds.getY();
-//
-//        juce::Rectangle<float> targetArea(x, y, targetWidth, targetHeight);
-//        g.drawImage(*img, targetArea);
-//    }
-//}
-
 void SnapKnob::paint(juce::Graphics& g)
 {
     const float value = slider.getValue();
@@ -250,7 +223,6 @@ void knobSection::paint(juce::Graphics& g)
     g.setColour(juce::Colour::fromString("#FFABABAB"));
     g.drawLine(270.0f, 0.0f, 270.0f, (float)getHeight(), 1.0f);
 
-    // 👇 Draw name.png bottom-left
     if (nameImage.isValid())
     {
 
@@ -263,19 +235,6 @@ void knobSection::paint(juce::Graphics& g)
 
     }
 }
-
-
-//void knobSection::resized()
-//{
-//    const int knobSize = 170;
-//    const int spacing = 205;
-//    const int startX = 270 + 180;
-//    const int centerY = getHeight() / 2 - knobSize / 2;
-//
-//    compressionKnob.setBounds(startX, centerY, knobSize, knobSize);
-//    saturationKnob.setBounds(startX + spacing, centerY, knobSize, knobSize);
-//    highcutKnob.setBounds(startX + spacing * 2, centerY, knobSize, knobSize);
-//}
 
 void knobSection::resized()
 {

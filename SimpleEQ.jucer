@@ -12,23 +12,23 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="GRE2kk" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
-    <FILE id="uFqNuR" name="comp.png" compile="0" resource="1" file="comp.png"/>
-    <FILE id="CZOc6e" name="crush.png" compile="0" resource="1" file="crush.png"/>
-    <FILE id="LhHZLi" name="dont.png" compile="0" resource="1" file="dont.png"/>
+    <FILE id="GYuZaE" name="comp.png" compile="0" resource="1" file="assets/comp.png"/>
+    <FILE id="bdDRGX" name="crush.png" compile="0" resource="1" file="assets/crush.png"/>
+    <FILE id="bfICxa" name="dont.png" compile="0" resource="1" file="assets/dont.png"/>
     <FILE id="t1gpbm" name="frequencyLines.cpp" compile="1" resource="0"
           file="Source/frequencyLines.cpp"/>
     <FILE id="sFNOt1" name="frequencyLines.h" compile="0" resource="0"
           file="Source/frequencyLines.h"/>
-    <FILE id="Lxs01W" name="glue.png" compile="0" resource="1" file="glue.png"/>
-    <FILE id="NCOWF5" name="hicut.png" compile="0" resource="1" file="hicut.png"/>
+    <FILE id="jBu0Fj" name="glue.png" compile="0" resource="1" file="assets/glue.png"/>
+    <FILE id="XNoJ44" name="hicut.png" compile="0" resource="1" file="assets/hicut.png"/>
     <FILE id="sLjWrT" name="knobSection.cpp" compile="1" resource="0" file="Source/knobSection.cpp"/>
     <FILE id="B2QAAF" name="knobSection.h" compile="0" resource="0" file="Source/knobSection.h"/>
-    <FILE id="emIE4v" name="name.png" compile="0" resource="1" file="name.png"/>
-    <FILE id="FwerRU" name="ott.png" compile="0" resource="1" file="ott.png"/>
+    <FILE id="lW9lyb" name="name.png" compile="0" resource="1" file="assets/name.png"/>
+    <FILE id="YkIAYF" name="ott.png" compile="0" resource="1" file="assets/ott.png"/>
     <FILE id="fnmvkp" name="QuarterCircle.cpp" compile="1" resource="0"
           file="Source/QuarterCircle.cpp"/>
     <FILE id="Jzg0vl" name="QuarterCircle.h" compile="0" resource="0" file="Source/QuarterCircle.h"/>
-    <FILE id="cUhGmj" name="warm.png" compile="0" resource="1" file="warm.png"/>
+    <FILE id="a1oGZP" name="warm.png" compile="0" resource="1" file="assets/warm.png"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>

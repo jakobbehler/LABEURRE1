@@ -9,7 +9,7 @@ const float biggestR = 170.f;
 // Constructor: Initialize radius
 QuarterCircle::QuarterCircle(int rotationIndex)
 {
-    this->rotation = rotationIndex;  // `this->` clarifies you're assigning to a member variable
+    this->rotation = rotationIndex; // member variable stuff in constructor!!!!
     radius = 75.f;
     smallestRadius = smallestR;
     biggestRadius = biggestR;
@@ -24,8 +24,7 @@ QuarterCircle::~QuarterCircle()
 
 void QuarterCircle::paint(juce::Graphics& g)
 {
-    // Background
-    //g.fillAll(juce::Colours::white);
+
     
     juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
     g.setColour(dunkel_farb);
@@ -108,7 +107,7 @@ void QuarterCircle::paint(juce::Graphics& g)
     g.fillPath(path);
     
     
-    //================ RADIUS LABEL
+    //================ RADIUS LABEL ================ TO IMPLEMENT PROPERLY!!
 
 //    // Label and hover styling
 //    g.setColour(isHovered ? juce::Colours::white : juce::Colours::black);
@@ -125,17 +124,13 @@ void QuarterCircle::paint(juce::Graphics& g)
 
 
 
-// Handle mouse drag to update the radius
+// mouse drag to update the radius
 void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
 {
-    //juce::Point<float> center(getWidth(), 0.f);
-    //juce::Point<float> center(getWidth(), 0.f);
-    
 
     float newRadius = event.position.getDistanceFrom(centerPoint);
     radius = juce::jlimit(smallestR, biggestR, newRadius); // Constrain radius
     
-
     radius = juce::jlimit(smallestRadius,  biggestRadius , newRadius);
     repaint();
     
@@ -148,8 +143,7 @@ void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
 // Handle resizing
 void QuarterCircle::resized()
 {
-    repaint(); // Redraw when resized
-    //generateGradient();
+    repaint();
 }
 
 // Getter for radius
@@ -163,7 +157,6 @@ void QuarterCircle::setRadius(float newRadius)
     radius = juce::jlimit(smallestRadius, biggestRadius, newRadius);
     repaint();
 }
-
 
 
 void QuarterCircle::mouseEnter(const juce::MouseEvent& event)
@@ -196,11 +189,10 @@ void CircleComponent::resized()
     const auto w = getWidth();
     const auto h = getHeight();
 
-    // Total size to subtract from full width/height due to margin in between
+    // FOR POSITIONING --> SUBTRACT MARGINS
     const int quadW = (w - margin) / 2;
     const int quadH = (h - margin) / 2;
 
-    // Position the 4 quarter circles with a 20px margin in between
     quads[0].setBounds(quadW + margin, 0, quadW, quadH);                // top-right
     quads[1].setBounds(quadW + margin, quadH + margin, quadW, quadH);   // bottom-right
     quads[2].setBounds(0, quadH + margin, quadW, quadH);                // bottom-left
@@ -217,9 +209,9 @@ QuarterCircle& CircleComponent::getQuad(int index)
 void CircleComponent::paint(juce::Graphics& g)
 {
     
-    g.reduceClipRegion(getLocalBounds()); // ✅ Clip to bounds of CircleComponent
+    g.reduceClipRegion(getLocalBounds());
 
-    // Optional debug border:
+    // BORDER FOR DEBUGGING!
 //    g.setColour(juce::Colours::blue);
 //    g.drawRect(getLocalBounds());
 //    DBG("[CircleComponent] paint called");
@@ -252,6 +244,7 @@ void frequencyLineComponent::paint(juce::Graphics& g)
     juce::Rectangle<int> textBounds(getWidth() - 90, y_position_pixels - 15, 100, 30);
     g.drawText(juce::String(herz) + " Hz", textBounds, juce::Justification::left, false);
     
+    //BOUNDS FOR DEBUGGING
 //    g.setColour(juce::Colours::red);
 //    g.drawRect(getLocalBounds());
 }
@@ -288,18 +281,18 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
         if (std::abs(event.position.y - y_position_pixels) < 10.0f)
         {
             isDragging = true;
-            setInterceptsMouseClicks(true, false);  // ✅ Capture clicks when near the line
+            setInterceptsMouseClicks(true, false);
         }
         else
         {
-            setInterceptsMouseClicks(false, false); // ✅ Let clicks pass through to CircleComponent
+            setInterceptsMouseClicks(false, false);
         }
     }
 
     void frequencyLineComponent::mouseUp(const juce::MouseEvent&)
     {
         isDragging = false;
-        setInterceptsMouseClicks(true, false);  // ✅ Restore normal behavior
+        setInterceptsMouseClicks(true, false);
     }
 
     bool frequencyLineComponent::hitTest(int x, int y)
@@ -307,14 +300,6 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
         // Only respond if mouse is near the line
         return std::abs(y - y_position_pixels) < 10.0f;
     }
-
-
-//void frequencyLineComponent::mouseUp(const juce::MouseEvent&)
-//{
-//    isDragging = false;
-//}
-
-
 
 
 float frequencyLineComponent::getYposition() const
@@ -330,14 +315,11 @@ void frequencyLineComponent::setYposition(double y)
 
 void frequencyLineComponent::updateHerzFromY()
 {
-    // You can make this log scale if needed
     
     const float minHz = 20.0f;
     const float maxHz = 20000.0f;
 
     float norm = juce::jlimit(0.0f, 1.0f, (y_position_pixels - minY) / (maxY - minY));
-    
-    //float logHz = juce::jmap(norm, std::log10(minHz), std::log10(maxHz)); // old
     
     float logHz = juce::jmap(1.0f - norm, std::log10(minHz), std::log10(maxHz)); // flipped
 
@@ -365,8 +347,7 @@ void frequencyLineComponent::updateYFromHerz()
 
     float logHz = std::log10(herz);
     float norm = (logHz - std::log10(minHz)) / (std::log10(maxHz) - std::log10(minHz));
-    //y_position_pixels = juce::jmap(norm, minY, maxY); //old
-    y_position_pixels = juce::jmap(1.0f - norm, minY, maxY); // flipped
+    y_position_pixels = juce::jmap(1.0f - norm, minY, maxY); // flipped BECAUSE Y STARTS AT TOP!!
 
 }
 
