@@ -315,7 +315,7 @@ CompressorSettings SimpleEQAudioProcessor::getCompressorSettings(const double in
     //settings.makeupGain = 1.f - (settings.threshold / settings.ratio) * (1 - (1.0f / settings.ratio));
     
     float normalized = juce::jlimit(0.0, 1.0, intensity);
-    settings.makeupGain = std::pow(1.0f + normalized * 2.5f, 2.5f);  // e.g. ranges from ~1.0 to ~5.7
+    settings.makeupGain = std::pow(1.0f + normalized * 2.0f, 2.5f);  // e.g. ranges from ~1.0 to ~5.7
     
     return settings;
     
@@ -525,9 +525,9 @@ float SimpleEQAudioProcessor::distortionDONT(float x, float y_old, float drive, 
     float saturated2 = std::tanh(dynamicDrive * dynamicDrive * saturated);
 
     // turn down volume with higher drives!
-    float gainCompensation = juce::jmap(drive, 1.0f, 7.0f, 0.5f, 0.15f);  // from 1.0 to 0.5
+    float gainCompensation = juce::jmap(drive, 1.0f, 7.0f, 0.5f, 0.1f);  // from 0.5 to 0.1
 
-    gainCompensation = std::pow(gainCompensation, 1.1f); // COMPENSATION CURVE --> NONLINEAR (TO TWEAK)
+    gainCompensation = std::pow(gainCompensation, 1.3f); // COMPENSATION CURVE --> NONLINEAR (TO TWEAK)
 
     return saturated2 * gainCompensation;
 }
