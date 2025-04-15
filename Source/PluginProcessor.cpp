@@ -330,8 +330,11 @@ CompressorSettings SimpleEQAudioProcessor::getCompressorSettings(const double in
     //settings.makeupGain = 1.f - (settings.threshold / settings.ratio) * (1 - (1.0f / settings.ratio));
     
     float normalized = juce::jlimit(0.0, 1.0, intensity);
-    settings.makeupGain = std::pow(1.0f + normalized * 2.0f, 2.5f);  // e.g. ranges from ~1.0 to ~5.7
+    //settings.makeupGain = std::pow(1.0f + normalized * 2.0f, 2.5f);  // e.g. ranges from ~1.0 to ~5.7
     
+    float curve = std::pow(normalized, 3.0f);
+    settings.makeupGain = std::pow(1.0f + curve * 3.8f, 3.f);
+
     return settings;
     
 }
@@ -430,12 +433,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
     // COMP ----
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("compLowIntensity", 1),
                                                                  "compLowIntensity",
-                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
+                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.55f),
                                                                  0.f));
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("compHighIntensity", 1),
                                                                  "compHighIntensity",
-                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.75f),
+                                                                 juce::NormalisableRange<float>(0.f, 1.f, 0.05f, 0.55f),
                                                                  0.f));
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(
@@ -588,7 +591,7 @@ inline float upwardCompressSample(float input, float thresholdDB, float ratio)
         float diff = (linearThresh - inputAbs) / linearThresh;
 
         // Nonlinear gain
-        float gain = 1.0f + std::pow(diff, 2.5f) * (ratio - 1.0f);  //exponent == softness
+        float gain = 1.0f + std::pow(diff, 4.f) * (ratio - 1.0f);  //exponent == softness
 
         return input * gain;
     }
