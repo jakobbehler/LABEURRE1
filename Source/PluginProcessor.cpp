@@ -577,14 +577,27 @@ distortionSettings SimpleEQAudioProcessor::getDistortionSettings(const double in
 // upward compression -----------------------------
 
 
-inline float upwardCompressSample(float input, float thresholdDB, float gain)
+inline float upwardCompressSample(float input, float thresholdDB, float ratio)
 {
     float linearThresh = juce::Decibels::decibelsToGain(thresholdDB);
-    if (std::abs(input) < linearThresh)
+    float inputAbs = std::abs(input);
+
+    if (inputAbs < linearThresh)
+    {
+        // How far below the threshold? --> calc the gain based on this val
+        float diff = (linearThresh - inputAbs) / linearThresh;
+
+        // Nonlinear gain
+        float gain = 1.0f + std::pow(diff, 2.5f) * (ratio - 1.0f);  //exponent == softness
+
         return input * gain;
+    }
     else
-        return 0.0f;
+    {
+        return input;
+    }
 }
+
 
 
 std::pair<float, float> SimpleEQAudioProcessor::applyUpwardCompression(float low, float high)
