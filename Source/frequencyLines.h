@@ -15,15 +15,22 @@
 //==============================================================================
 /*
 */
-class frequencyLines  : public juce::Component
+class frequencyLines : public juce::Component, private juce::Timer
 {
 public:
     frequencyLines();
+    
     ~frequencyLines() override;
 
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
 
+    void setFFTData(const std::vector<float>& newFFTData);
+
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (frequencyLines)
+    void timerCallback() override;
+
+    std::vector<float> fftBins;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(frequencyLines)
 };

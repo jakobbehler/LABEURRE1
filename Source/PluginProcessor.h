@@ -9,7 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-
+#include "frequencyLines.h"
 // Extract Parameters
 
 
@@ -44,8 +44,37 @@ struct UpwardCompressorSettings
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
 
+class FFTDataGenerator
+{
+public:
+    static constexpr int fftOrder = 11; // 2^11 = 2048 samples
+    static constexpr int fftSize = 1 << fftOrder;
 
-//==============================================================================
+    FFTDataGenerator() : forwardFFT(fftOrder), window(fftSize, juce::dsp::WindowingFunction<float>::hann)
+    {
+        juce::zeromem(fftData, sizeof(fftData));
+    }
+
+    // Feed in audio data here
+    void pushSamples(const juce::AudioBuffer<float>& buffer);
+
+    // Do FFT and return magnitude bins in dB
+    bool produceFFTData(std::vector<float>& outputBins);
+
+private:
+    float fifo[fftSize] = { 0 };
+    float fftData[fftSize * 2] = { 0 };
+    int fifoIndex = 0;
+    bool nextFFTBlockReady = false;
+
+    juce::dsp::FFT forwardFFT;
+    juce::dsp::WindowingFunction<float> window;
+};
+
+
+
+
+//===================================================================================================================
 /**
 */
 class SimpleEQAudioProcessor  : public juce::AudioProcessor
@@ -94,13 +123,15 @@ public:
     juce::AudioProcessorValueTreeState apvts {*this, nullptr, "Parameters", createParameterLayout()};
     
     
-    
-    
+    FFTDataGenerator fftData;
+    std::vector<float> fftBins;
+    const std::vector<float>& getFftData() const { return fftBins; } // Getter for the editor
+
     
     
     
 private:
-    
+
     // Type Aliases and Processor Chains
 
     // Define filters and compressors
@@ -168,3 +199,27 @@ private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
 };
+
+
+
+
+
+//
+//class AudioBufferQueue
+//{
+//public:
+//    static constexpr int bufferSize = 512;
+//    static constexpr int numBuffers = 20;
+//
+//    void push(const juce::AudioBuffer<float>& buffer);
+//
+//    const juce::AudioBuffer<float>& getLatest();
+//
+//private:
+//    juce::AbstractFifo fifo { numBuffers };
+//    std::array<juce::AudioBuffer<float>, numBuffers> buffers;
+//    juce::AudioBuffer<float> dummy;
+//};
+//AudioBufferQueue bufferQueue;
+//
+

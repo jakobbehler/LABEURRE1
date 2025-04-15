@@ -25,9 +25,11 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     addAndMakeVisible(knobSection);
     addAndMakeVisible(freqLine);
     freqLine.toFront(false);
+
         
     setSize (1200, 600);
     
+    startTimerHz(30);
    
 
     
@@ -56,7 +58,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
         float norm = normalize(radius);
         auto* param = audioProcessor.apvts.getParameter("distHighIntensity");
         param->setValueNotifyingHost(norm);
-        DBG("[Editor] Sending distHighIntensity to processor: " << norm);
+        //DBG("[Editor] Sending distHighIntensity to processor: " << norm);
     };
 
     // Bottom-right → distLow
@@ -136,14 +138,17 @@ void SimpleEQAudioProcessorEditor::resized()
     
     // Set the visualizer to the left 100px of main area
     visualizer.setBounds(mainArea.removeFromLeft(100)); // 100×350
-
+    
 
     // Frequency line over the full visual area (same as circle area)
     freqLine.setBounds(mainAreaX, mainAreaY, mainAreaW, mainAreaH);
 
     // Knob section pinned to bottom
     knobSection.setBounds(0, editorH - knobAreaH, editorW, knobAreaH);
+    
+    
 }
+
 
 
 
@@ -164,6 +169,11 @@ void SimpleEQAudioProcessorEditor::timerCallback()
     circle.getQuad(3).setRadius(denormalize(apvts.getRawParameterValue("compHighIntensity")->load()));
 
     freqLine.setHerz(apvts.getRawParameterValue("bandsplit_frequency")->load());
+    
+
+    visualizer.setFFTData(audioProcessor.getFftData());
+    
+
 }
 
 

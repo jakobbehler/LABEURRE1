@@ -112,6 +112,7 @@ void SimpleEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
 
     updateFilter();
     updateCompressor();
+
 }
 
 
@@ -158,49 +159,42 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 {
     juce::ScopedNoDenormals noDenormals;
 
-
     updateCompressor();
     updateFilter();
     
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // Get distortion parameters for both bands
     float distHigh = apvts.getRawParameterValue("distHighIntensity")->load();
     float distLow = apvts.getRawParameterValue("distLowIntensity")->load();
-    
     int compSpeed = getCompressorSpeedMode();
-   
-    
+
     distortionSettings highSettings = getDistortionSettings(distHigh);
     distortionSettings lowSettings = getDistortionSettings(distLow);
 
-    // CLEAR EXTRA OUTPUT CHANNELS
-    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear(i, 0, buffer.getNumSamples());
-
     float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
-    
-    // DEBUG
-    
-    static float lastFreq = -1.0f; // cache last value
-    if (std::abs(lastFreq - crossoverFreq) > 0.01f) // only log changes
+
+    // Update crossover if needed
+    static float lastFreq = -1.0f;
+    if (std::abs(lastFreq - crossoverFreq) > 0.01f)
     {
         DBG("🔀 Band Split Frequency updated: " << crossoverFreq << " Hz");
         lastFreq = crossoverFreq;
     }
 
-    // _-------------------
     leftChain.get<0>().setCutoffFrequency(crossoverFreq);
     rightChain.get<0>().setCutoffFrequency(crossoverFreq);
 
-    // Process each channel independently
+    // Clear unused output channels
+    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear(i, 0, buffer.getNumSamples());
+
+    // === PROCESS PER CHANNEL ===
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
         auto* channelData = buffer.getWritePointer(channel);
         auto& chain = (channel == 0) ? leftChain : rightChain;
 
-        // Store previous samples for hysteresis feedback (TO IMPLEMENT IN DISTORTION)
         float y_old_low = 0.f;
         float y_old_high = 0.f;
 
@@ -208,46 +202,51 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
         {
             float inputSample = channelData[sample];
 
-            // Split signal into low and high frequency bands
             float lowSample, highSample;
             chain.get<0>().processSample(channel, inputSample, lowSample, highSample);
 
-            //  Apply distortion
+            // Distortion
             lowSample = distortionSample(lowSample, y_old_low, lowSettings.drive, lowSettings.c);
             highSample = distortionSample(highSample, y_old_high, highSettings.drive, highSettings.c);
 
-            // Store previous output for hysteresis feedback (TO IMPLEMENT)
             y_old_low = lowSample;
             y_old_high = highSample;
-            
-          
-            //  UPAWARD COMPRESSION
-            if (compSpeed == 2) // OTT mode
+
+            // Upward Compression (OTT)
+            if (compSpeed == 2)
             {
                 std::tie(lowSample, highSample) = applyUpwardCompression(lowSample, highSample);
             }
 
-    
-
-            // DOWNWARD COMPRESSION DEFAULT
+            // Downward Compression
             lowSample = chain.get<1>().get<1>().processSample(channel, lowSample);
             highSample = chain.get<2>().get<1>().processSample(channel, highSample);
 
-            // Gain (Makeup for comp)
+            // Makeup Gain
             lowSample = chain.get<1>().get<2>().processSample(lowSample);
             highSample = chain.get<2>().get<2>().processSample(highSample);
-            
 
-        
-            
-            //Sum processed bands
+            // Final mix
             float outputSample = lowSample + highSample;
-            outputSample = chain.get<3>().processSample(outputSample); // Apply high-cut filter
+            outputSample = chain.get<3>().processSample(outputSample);
             channelData[sample] = outputSample;
-
         }
     }
+
+    // === FFT Processing (Once Per Block) ===
+
+    // Use only left channel for spectrum analysis
+    juce::AudioBuffer<float> monoBuffer(1, buffer.getNumSamples());
+    monoBuffer.copyFrom(0, 0, buffer, 0, 0, buffer.getNumSamples());
+    fftData.pushSamples(monoBuffer);
+
+    std::vector<float> newBins;
+    if (fftData.produceFFTData(newBins))
+    {
+        fftBins = std::move(newBins);
+    }
 }
+
 
 
 
@@ -405,7 +404,7 @@ void SimpleEQAudioProcessor::updateFilter()
     *rightChain.get<3>().coefficients = *coefficients;
     
     //DEBUGGING
-    DBG("🔀 HighCut: " << cutoff << " Hz");
+    //DBG("🔀 HighCut: " << cutoff << " Hz");
 }
 
 
@@ -640,3 +639,61 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 }
 
 
+
+// ==================== AUDIO BUFFER FIFO FOR VISUALIZER =========================
+
+//void AudioBufferQueue::push(const juce::AudioBuffer<float>& buffer)
+//    {
+//        const auto start1 = fifo.write(1);
+//        if (start1.blockSize1 > 0)
+//            buffers[(int)start1.startIndex1].makeCopyOf(buffer);
+//    }
+//
+//const juce::AudioBuffer<float>& AudioBufferQueue::getLatest()
+//    {
+//        const auto start1 = fifo.read(1);
+//        if (start1.blockSize1 > 0)
+//            return buffers[(int)start1.startIndex1];
+//        return dummy;
+//    }
+//
+
+
+void FFTDataGenerator::pushSamples(const juce::AudioBuffer<float>& buffer)
+    {
+        auto* channelData = buffer.getReadPointer(0);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            if (fifoIndex == fftSize)
+            {
+                if (!nextFFTBlockReady)
+                {
+                    memcpy(fftData, fifo, sizeof(fifo));
+                    nextFFTBlockReady = true;
+                }
+                fifoIndex = 0;
+            }
+
+            fifo[fifoIndex++] = channelData[i];
+        }
+    }
+
+    // Do FFT and return magnitude bins in dB
+bool FFTDataGenerator::produceFFTData(std::vector<float>& outputBins)
+    {
+        if (!nextFFTBlockReady) return false;
+
+        window.multiplyWithWindowingTable(fifo, fftSize); // Apply window
+        memcpy(fftData, fifo, sizeof(fifo));
+        forwardFFT.performFrequencyOnlyForwardTransform(fftData);
+
+        outputBins.clear();
+        for (int i = 0; i < fftSize / 2; ++i)
+        {
+            float magnitudeDB = juce::Decibels::gainToDecibels(fftData[i], -100.0f);
+            outputBins.push_back(magnitudeDB);
+        }
+
+        nextFFTBlockReady = false;
+        return true;
+    }
