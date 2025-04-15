@@ -168,7 +168,10 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     // Get distortion parameters for both bands
     float distHigh = apvts.getRawParameterValue("distHighIntensity")->load();
     float distLow = apvts.getRawParameterValue("distLowIntensity")->load();
-
+    
+    int compSpeed = getCompressorSpeedMode();
+   
+    
     distortionSettings highSettings = getDistortionSettings(distHigh);
     distortionSettings lowSettings = getDistortionSettings(distLow);
 
@@ -216,15 +219,27 @@ void SimpleEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             // Store previous output for hysteresis feedback (TO IMPLEMENT)
             y_old_low = lowSample;
             y_old_high = highSample;
+            
+          
+            //  UPAWARD COMPRESSION
+            if (compSpeed == 2) // OTT mode
+            {
+                std::tie(lowSample, highSample) = applyUpwardCompression(lowSample, highSample);
+            }
 
-            // compression onn each band
+    
+
+            // DOWNWARD COMPRESSION DEFAULT
             lowSample = chain.get<1>().get<1>().processSample(channel, lowSample);
             highSample = chain.get<2>().get<1>().processSample(channel, highSample);
 
             // Gain (Makeup for comp)
             lowSample = chain.get<1>().get<2>().processSample(lowSample);
             highSample = chain.get<2>().get<2>().processSample(highSample);
+            
 
+        
+            
             //Sum processed bands
             float outputSample = lowSample + highSample;
             outputSample = chain.get<3>().processSample(outputSample); // Apply high-cut filter
@@ -322,6 +337,16 @@ CompressorSettings SimpleEQAudioProcessor::getCompressorSettings(const double in
 }
 
 
+int SimpleEQAudioProcessor::getCompressorSpeedMode()
+{
+    float raw = apvts.getRawParameterValue("compressorSpeed")->load();
+
+    if      (raw < 0.4f) return 0; // GLUE
+    else if (raw < 0.6f) return 1; // TAME
+    else                 return 2; // OTT
+}
+
+
 void SimpleEQAudioProcessor::applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings, int compressorSpeed)
 {
     compressor.setThreshold(settings.threshold);
@@ -344,15 +369,17 @@ void SimpleEQAudioProcessor::applyCompressorSettings(juce::dsp::Compressor<float
 void SimpleEQAudioProcessor::updateCompressor()
 {
     const ChainSettings chainSettings = getChainSettings(apvts);
-
-    // Get compressor float value from APVTS
-    float compSpeedRaw = apvts.getRawParameterValue("compressorSpeed")->load();
-
-    // Map exact float snap values to int states for processing
-    int compSpeed;
-    if      (compSpeedRaw < 0.4f) compSpeed = 0; // GLUE
-    else if (compSpeedRaw < 0.6f) compSpeed = 1; // TAME
-    else                          compSpeed = 2; // OTT
+//
+//    // Get compressor float value from APVTS
+//    float compSpeedRaw = apvts.getRawParameterValue("compressorSpeed")->load();
+//
+//    // Map exact float snap values to int states for processing
+//    int compSpeed;
+//    if      (compSpeedRaw < 0.4f) compSpeed = 0; // GLUE
+//    else if (compSpeedRaw < 0.6f) compSpeed = 1; // TAME
+//    else                          compSpeed = 2; // OTT
+    
+    int compSpeed = getCompressorSpeedMode();
 
     // Define compressor settings for both bands
     CompressorSettings lowBandSettings = getCompressorSettings(chainSettings.compLowIntensity);
@@ -547,6 +574,47 @@ distortionSettings SimpleEQAudioProcessor::getDistortionSettings(const double in
 }
 
 
+// upward compression -----------------------------
+
+
+inline float upwardCompressSample(float input, float thresholdDB, float gain)
+{
+    float linearThresh = juce::Decibels::decibelsToGain(thresholdDB);
+    if (std::abs(input) < linearThresh)
+        return input * gain;
+    else
+        return 0.0f;
+}
+
+
+std::pair<float, float> SimpleEQAudioProcessor::applyUpwardCompression(float low, float high)
+{
+    
+    ChainSettings chainsettings = getChainSettings(apvts);
+    float intensityLow = chainsettings.compLowIntensity;
+    float intensityHigh = chainsettings.compHighIntensity;
+    auto settingsLow  = getUpwardCompSettings(intensityLow);
+    auto settingsHigh = getUpwardCompSettings(intensityHigh);
+
+    low  += upwardCompressSample(low,  settingsLow.threshold,  settingsLow.ratio);
+    high += upwardCompressSample(high, settingsHigh.threshold, settingsHigh.ratio);
+
+    return { low, high };
+}
+
+
+UpwardCompressorSettings SimpleEQAudioProcessor::getUpwardCompSettings(const double intensity)
+{
+    UpwardCompressorSettings settings;
+
+    // Lower threshold catches quieter signals
+    settings.threshold = juce::jmap(float(intensity), 0.0f, 1.0f, -60.0f, -30.0f);
+
+    // Higher intensity = more upward lift (stronger ratio)
+    settings.ratio = juce::jmap(float(intensity), 0.0f, 1.0f, 1.5f, 3.5f);
+
+    return settings;
+}
 
 //==============================================================================
 // This creates new instances of the plugin..

@@ -35,6 +35,12 @@ struct distortionSettings {
     float c;
 };
 
+struct UpwardCompressorSettings
+{
+    float threshold;
+    float ratio;
+};
+
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
 
@@ -135,8 +141,16 @@ private:
     // COMPRESSOR METHODS -----------------------------
     
     CompressorSettings getCompressorSettings(const double intensity);
+    int getCompressorSpeedMode();
+    UpwardCompressorSettings getUpwardCompSettings(const double intensity);
+    
     void applyCompressorSettings(juce::dsp::Compressor<float>& compressor, juce::dsp::Gain<float>& gain, const CompressorSettings& settings, int compressorSpeed);
+    
+    
     void updateCompressor();
+    
+    void applyUpwardCompression(float& lowSample, float& highSample, float compLowIntensity, float compHighIntensity);
+    std::pair<float, float> applyUpwardCompression(float low, float high);
     
     void updateFilter();
     // DISTORTION METHODS -----------------------------
