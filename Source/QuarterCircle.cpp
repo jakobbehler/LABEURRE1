@@ -10,7 +10,7 @@ const float biggestR = 170.f;
 QuarterCircle::QuarterCircle(int rotationIndex)
 {
     this->rotation = rotationIndex; // member variable stuff in constructor!!!!
-    radius = 75.f;
+    radius = targetRadius = 75.f;
     smallestRadius = smallestR;
     biggestRadius = biggestR;
     
@@ -42,10 +42,29 @@ void QuarterCircle::resized()
 
 void QuarterCircle::setRadius(float newRadius)
 {
-    radius = juce::jlimit(smallestRadius, biggestRadius, newRadius);
+    targetRadius = juce::jlimit(smallestRadius, biggestRadius, newRadius);
+    startTimerHz(60); // Start interpolating
+}
+
+void QuarterCircle::timerCallback()
+{
+    float smoothing = 0.15f;
+
+    float diff = targetRadius - radius;
+    if (std::abs(diff) < 0.1f)
+    {
+        radius = targetRadius;
+        stopTimer(); // Done interpolating
+    }
+    else
+    {
+        radius += diff * smoothing;
+    }
+
     rebuildArc();
     repaint();
 }
+
 
 // === New helper ===
 void QuarterCircle::rebuildArc()
@@ -179,6 +198,8 @@ void CircleComponent::paint(juce::Graphics& g)
 //    g.drawRect(getLocalBounds());
 //    DBG("[CircleComponent] paint called");
 }
+
+
 
 
 // ====================================================================================================================

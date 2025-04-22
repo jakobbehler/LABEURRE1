@@ -8,7 +8,7 @@
 
 
 
-class QuarterCircle : public juce::Component
+class QuarterCircle : public juce::Component, private juce::Timer
 {
 public:
     QuarterCircle(int rotationIndex);
@@ -25,9 +25,11 @@ public:
     
     std::function<void(float)> onRadiusChanged;
     void rebuildArc();
+    void timerCallback() override;
     
 private:
     float radius; // Store the radius of the quarter-circle
+    float targetRadius;
     float smallestRadius;
     float biggestRadius;
     int rotation;
@@ -59,12 +61,10 @@ public:
     QuarterCircle& getQuad(int index);
     void paint(juce::Graphics&) override;
 
-
-
 private:
     
     float y_position;
-
+    
 
     
     QuarterCircle quads[4] = {
