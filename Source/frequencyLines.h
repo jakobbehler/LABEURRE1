@@ -31,6 +31,7 @@ private:
     void timerCallback() override;
 
     std::vector<float> fftBins;
+    std::vector<float> smoothedBins;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(frequencyLines)
 };

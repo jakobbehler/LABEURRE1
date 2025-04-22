@@ -679,21 +679,66 @@ void FFTDataGenerator::pushSamples(const juce::AudioBuffer<float>& buffer)
     }
 
     // Do FFT and return magnitude bins in dB
+//bool FFTDataGenerator::produceFFTData(std::vector<float>& outputBins)
+//    {
+//        if (!nextFFTBlockReady) return false;
+//
+//        window.multiplyWithWindowingTable(fifo, fftSize); // Apply window
+//        memcpy(fftData, fifo, sizeof(fifo));
+//        forwardFFT.performFrequencyOnlyForwardTransform(fftData);
+//
+//        outputBins.clear();
+//        for (int i = 0; i < fftSize / 2; ++i)
+//        {
+//            float magnitudeDB = juce::Decibels::gainToDecibels(fftData[i], -100.0f);
+//            outputBins.push_back(magnitudeDB);
+//        }
+//
+//        nextFFTBlockReady = false;
+//        return true;
+//    }
+
 bool FFTDataGenerator::produceFFTData(std::vector<float>& outputBins)
+{
+    if (!nextFFTBlockReady) return false;
+
+    memcpy(fftData, fifo, sizeof(fifo));              // Copy raw samples first
+    window.multiplyWithWindowingTable(fftData, fftSize); // Then window them in-place
+
+    forwardFFT.performFrequencyOnlyForwardTransform(fftData);
+
+    
+    
+    outputBins.clear();
+
+    const int desiredBins = 20;  // <- reduce to only what you need
+    const int stride = (fftSize / 2) / desiredBins;
+
+    const int neighborhood = 8; // how many bins to average around each center
+
+    for (int i = 0; i < desiredBins; ++i)
     {
-        if (!nextFFTBlockReady) return false;
+        int center = i * stride;
+        int start = std::max(0, center - neighborhood);
+        int end   = std::min((fftSize / 2) - 1, center + neighborhood);
 
-        window.multiplyWithWindowingTable(fifo, fftSize); // Apply window
-        memcpy(fftData, fifo, sizeof(fifo));
-        forwardFFT.performFrequencyOnlyForwardTransform(fftData);
+        float sum = 0.0f;
+        int count = 0;
 
-        outputBins.clear();
-        for (int i = 0; i < fftSize / 2; ++i)
+        for (int j = start; j <= end; ++j)
         {
-            float magnitudeDB = juce::Decibels::gainToDecibels(fftData[i], -100.0f);
-            outputBins.push_back(magnitudeDB);
+            sum += fftData[j];
+            ++count;
         }
 
-        nextFFTBlockReady = false;
-        return true;
+        float avgMag = sum / static_cast<float>(count);
+        float db = juce::Decibels::gainToDecibels(avgMag, -100.0f);
+        outputBins.push_back(db);
     }
+
+
+
+    nextFFTBlockReady = false;
+    return true;
+}
+

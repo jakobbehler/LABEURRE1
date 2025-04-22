@@ -268,8 +268,8 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
 
         updateHerzFromY();  // Updates `herz`
 
-        repaint();
-
+        //repaint();
+        repaint(getLocalBounds());
         if (onYChanged)
             onYChanged(herz);  // Only from user drag
     }
@@ -343,7 +343,7 @@ void frequencyLineComponent::updateYFromHerz()
 {
 
     const float minHz = 20.0f;
-    const float maxHz = 20000.0f;
+    const float maxHz = 20000.0f;§
 
     float logHz = std::log10(herz);
     float norm = (logHz - std::log10(minHz)) / (std::log10(maxHz) - std::log10(minHz));

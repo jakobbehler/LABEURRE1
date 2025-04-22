@@ -7,17 +7,14 @@
 
   ==============================================================================
 */
-
 #include <JuceHeader.h>
 #include "frequencyLines.h"
 
 //==============================================================================
 frequencyLines::frequencyLines()
-
-    {
-        startTimerHz(60); // update 60 times per second
-    }
-    
+{
+    startTimerHz(25); // update rate
+}
 
 frequencyLines::~frequencyLines()
 {
@@ -25,52 +22,53 @@ frequencyLines::~frequencyLines()
 
 void frequencyLines::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::black);
+    
 
-    // Draw background scale lines (keep your existing logic)
-    g.setColour(juce::Colours::darkgrey);
-    const int numTicks = 10;
+    const int numTicks = 20;
+
+    if ((int)smoothedBins.size() < numTicks)
+        return;
+
+    auto bounds = getLocalBounds().toFloat();
+    float height = bounds.getHeight();
+    float width = bounds.getWidth();
+    float binHeight = height / (float)(numTicks - 1);
+
     for (int i = 0; i < numTicks; ++i)
     {
-        float norm = static_cast<float>(i) / (numTicks - 1);
-        float y = juce::jmap(1.0f - norm, 0.0f, (float)getHeight());
-        g.drawLine(0.0f, y, 15.0f, y, 1.0f);
-    }
+        float magnitude = smoothedBins[i];
 
-    // Draw FFT bins
-    if (fftBins.empty()) return;
+        float lineLength = 15.f + juce::jmap(magnitude, -60.0f, 0.0f, -15.f, width - 15.f);
+        lineLength = juce::jlimit(0.0f, width, lineLength);
 
-    g.setColour(juce::Colours::aqua);
-    auto bounds = getLocalBounds().toFloat();
-    const float width = bounds.getWidth();
-    const float height = bounds.getHeight();
-    const int numBins = fftBins.size();
-    const float binWidth = width / (float)numBins;
-
-    for (int i = 0; i < numBins; ++i)
-    {
-        float binHeight = juce::jmap(fftBins[i], -100.0f, 0.0f, 0.0f, height);
-        g.drawLine(i * binWidth, height, i * binWidth, height - binHeight);
+        float y = (numTicks - 1 - i) * binHeight;
+        juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
+        g.setColour(dunkel_farb);
+        g.drawLine(0.0f, y, lineLength, y, 1.0f);
     }
 }
-
 
 void frequencyLines::resized()
 {
-    // This method is where you should set the bounds of any child
-    // components that your component contains..
-
+    // No child components yet
 }
-
-
-
 
 void frequencyLines::setFFTData(const std::vector<float>& newFFTData)
 {
-    fftBins = newFFTData;
+    const float smoothingFactor = 0.9f;
+
+    if (smoothedBins.size() != newFFTData.size())
+        smoothedBins = newFFTData;
+
+    for (size_t i = 0; i < newFFTData.size(); ++i)
+    {
+        smoothedBins[i] = smoothingFactor * smoothedBins[i] + (1.0f - smoothingFactor) * newFFTData[i];
+    }
+
+    fftBins = newFFTData; // still store raw bins if needed
 }
 
 void frequencyLines::timerCallback()
 {
-    repaint(); // repaint yourself
+    repaint();
 }
