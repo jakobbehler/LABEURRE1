@@ -38,12 +38,16 @@ void frequencyLines::paint(juce::Graphics& g)
     {
         float magnitude = smoothedBins[i];
 
-        float lineLength = 15.f + juce::jmap(magnitude, -60.0f, 0.0f, -15.f, width - 15.f);
-        lineLength = juce::jlimit(0.0f, width, lineLength);
+        float norm = juce::jmap(magnitude, -80.0f, 0.0f, 0.0f, 1.0f);
+        norm = std::pow(norm, 3.f);
+        float lenmod = juce::jmap(norm, 0.f, 1.0f, 5.f, width-15.f);
+        float lineLength = 15.0f + lenmod;
 
         float y = (numTicks - 1 - i) * binHeight;
+        
         juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
         g.setColour(dunkel_farb);
+        
         g.drawLine(0.0f, y, lineLength, y, 1.0f);
     }
 }
