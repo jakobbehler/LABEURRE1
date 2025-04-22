@@ -28,6 +28,7 @@ public:
     void setFFTData(const std::vector<float>& newFFTData);
 
 private:
+    
     void timerCallback() override;
 
     std::vector<float> fftBins;

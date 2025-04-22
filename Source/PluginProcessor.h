@@ -44,9 +44,15 @@ struct UpwardCompressorSettings
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
 
+
+
+
 class FFTDataGenerator
 {
 public:
+    
+    void setSampleRate(float newSampleRate) { sampleRate = newSampleRate; }
+    
     static constexpr int fftOrder = 11; // 2^11 = 2048 samples
     static constexpr int fftSize = 1 << fftOrder;
 
@@ -62,6 +68,8 @@ public:
     bool produceFFTData(std::vector<float>& outputBins);
 
 private:
+    float sampleRate = 44100.0f; // default fallback
+    
     float fifo[fftSize] = { 0 };
     float fftData[fftSize * 2] = { 0 };
     int fifoIndex = 0;

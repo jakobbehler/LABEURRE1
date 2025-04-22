@@ -38,7 +38,9 @@ void frequencyLines::paint(juce::Graphics& g)
     {
         float magnitude = smoothedBins[i];
 
-        float norm = juce::jmap(magnitude, -80.0f, 0.0f, 0.0f, 1.0f);
+        float clampedMag = juce::jlimit(-80.0f, 0.0f, magnitude);
+        float norm = juce::jmap(clampedMag, -80.0f, 0.0f, 0.0f, 1.0f);
+
         norm = std::pow(norm, 3.f);
         float lenmod = juce::jmap(norm, 0.f, 1.0f, 5.f, width-15.f);
         float lineLength = 15.0f + lenmod;

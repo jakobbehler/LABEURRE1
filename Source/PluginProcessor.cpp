@@ -104,6 +104,7 @@ void SimpleEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
 
     leftChain.prepare(spec);
     rightChain.prepare(spec);
+    fftData.setSampleRate(sampleRate);
 
     float crossoverFreq = apvts.getRawParameterValue("bandsplit_frequency")->load();
 
@@ -702,25 +703,27 @@ bool FFTDataGenerator::produceFFTData(std::vector<float>& outputBins)
 {
     if (!nextFFTBlockReady) return false;
 
-    memcpy(fftData, fifo, sizeof(fifo));              // Copy raw samples first
-    window.multiplyWithWindowingTable(fftData, fftSize); // Then window them in-place
-
+    window.multiplyWithWindowingTable(fftData, fftSize); // Only apply window here
     forwardFFT.performFrequencyOnlyForwardTransform(fftData);
 
     
-    
     outputBins.clear();
 
-    const int desiredBins = 20;  // <- reduce to only what you need
-    const int stride = (fftSize / 2) / desiredBins;
+    const int desiredBins = 20;
+    const int neighborhood = 3;
 
-    const int neighborhood = 8; // how many bins to average around each center
+    float minFreq = 20.0f;
+    float maxFreq = sampleRate / 2.0f;
+    int fftHalf = fftSize / 2;
 
     for (int i = 0; i < desiredBins; ++i)
     {
-        int center = i * stride;
-        int start = std::max(0, center - neighborhood);
-        int end   = std::min((fftSize / 2) - 1, center + neighborhood);
+        float norm = (float)i / (desiredBins - 1);
+        float freq = minFreq * std::pow(maxFreq / minFreq, norm);
+        int centerBin = juce::jlimit(0, fftHalf - 1, (int)(freq / maxFreq * fftHalf));
+
+        int start = std::max(0, centerBin - neighborhood);
+        int end   = std::min(fftHalf - 1, centerBin + neighborhood);
 
         float sum = 0.0f;
         int count = 0;
@@ -735,8 +738,6 @@ bool FFTDataGenerator::produceFFTData(std::vector<float>& outputBins)
         float db = juce::Decibels::gainToDecibels(avgMag, -100.0f);
         outputBins.push_back(db);
     }
-
-
 
     nextFFTBlockReady = false;
     return true;
