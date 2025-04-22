@@ -29,7 +29,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
         
     setSize (1200, 600);
     
-    startTimerHz(30);
+    startTimerHz(40);
    
 
     

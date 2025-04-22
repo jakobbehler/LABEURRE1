@@ -24,7 +24,7 @@ public:
     void mouseExit(const juce::MouseEvent& event) override;
     
     std::function<void(float)> onRadiusChanged;
-
+    void rebuildArc();
     
 private:
     float radius; // Store the radius of the quarter-circle
@@ -33,6 +33,7 @@ private:
     int rotation;
     juce::String effectName;
     juce::Point<float> centerPoint;
+    juce::Path cachedArcPath;
     
     
     

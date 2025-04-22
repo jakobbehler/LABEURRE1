@@ -22,102 +22,76 @@ QuarterCircle::~QuarterCircle()
 }
 
 
+// Add a member:
+juce::Path cachedArcPath;
+
+// Update `paint()`:
 void QuarterCircle::paint(juce::Graphics& g)
 {
-
-    
     juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
     g.setColour(dunkel_farb);
+    g.fillPath(cachedArcPath);
+}
 
+// Rebuild arc when resized or radius changes:
+void QuarterCircle::resized()
+{
+    rebuildArc();
+    repaint();
+}
+
+void QuarterCircle::setRadius(float newRadius)
+{
+    radius = juce::jlimit(smallestRadius, biggestRadius, newRadius);
+    rebuildArc();
+    repaint();
+}
+
+// === New helper ===
+void QuarterCircle::rebuildArc()
+{
     const float diameter = radius * 2.0f;
     const float widthF = static_cast<float>(getWidth());
     const float heightF = static_cast<float>(getHeight());
-    
-    float startArc = 0.f;
-    float endArc = 0.f;
-    float x = 0.0f;
-    float y = 0.0f;
-    juce::Point<float> center;
 
-    // Set position based on rotation
+    float x = 0.0f, y = 0.0f;
+    float startArc = 0.0f, endArc = 0.0f;
+
     switch (rotation)
     {
-        case 0: // top-right
-            
-            effectName = "distortionTop";
-            x = -radius;
-            y = heightF - radius;
-            center = juce::Point<float>(0.0f, heightF);
-            
-            startArc = 0.f;
+        case 0:
+            x = -radius; y = heightF - radius;
+            centerPoint = { 0.0f, heightF };
+            startArc = 0.0f;
             endArc = juce::MathConstants<float>::halfPi;
-            
-            
             break;
-
-        case 1: // bottom-right
-            
-            effectName = "distortionLow";
-            x = -radius;
-            y = -radius;
-            center = juce::Point<float>(0, 0);
-            
+        case 1:
+            x = -radius; y = -radius;
+            centerPoint = { 0.0f, 0.0f };
             startArc = juce::MathConstants<float>::halfPi;
             endArc = juce::MathConstants<float>::pi;
-
-            
             break;
-
-        case 3:// top-left
-            
-            effectName = "compressionTop";
-                x = widthF - radius;
-            y = heightF-radius;
-                center = juce::Point<float>(widthF, heightF);
-
-            startArc = juce::MathConstants<float>::halfPi;;
+        case 3:
+            x = widthF - radius; y = heightF - radius;
+            centerPoint = { widthF, heightF };
+            startArc = juce::MathConstants<float>::halfPi;
             endArc = juce::MathConstants<float>::twoPi;
             break;
-
-        case 2: // bottom-left
+        case 2:
         default:
-            
-            effectName = "compressionBottom";
-            x = widthF - radius;
-            y = -radius;
-            center = juce::Point<float>(widthF, 0.0f);
-            
+            x = widthF - radius; y = -radius;
+            centerPoint = { widthF, 0.0f };
             startArc = juce::MathConstants<float>::pi;
             endArc = 3 * juce::MathConstants<float>::halfPi;
             break;
     }
-    
-    centerPoint = center;
 
-    // Create arc path
-    juce::Path path;
-    path.startNewSubPath(center);
-    path.addArc(x, y, diameter, diameter,
-                startArc,
-                endArc, true);
-    path.lineTo(center);
-    path.closeSubPath();
-
-    // Draw arc
-    g.fillPath(path);
-    
-    
-    //================ RADIUS LABEL ================ TO IMPLEMENT PROPERLY!!
-
-//    // Label and hover styling
-//    g.setColour(isHovered ? juce::Colours::white : juce::Colours::black);
-//    juce::String text =juce::String(effectName) + " Radius: " + juce::String(radius);
-//    g.drawText(text,
-//               getLocalBounds(),
-//               juce::Justification::topRight);
-//    
-//    g.setColour(juce::Colours::green);
-//    g.drawRect(getLocalBounds());
+    // Rebuild arc
+    cachedArcPath.clear();
+    cachedArcPath.startNewSubPath(centerPoint);
+    cachedArcPath.addArc(x, y, diameter, diameter, startArc, endArc, true);
+    cachedArcPath.lineTo(centerPoint);
+    cachedArcPath.closeSubPath();
 }
 
 
@@ -139,24 +113,13 @@ void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
 }
 
 
-
-// Handle resizing
-void QuarterCircle::resized()
-{
-    repaint();
-}
-
 // Getter for radius
 float QuarterCircle::getRadius() const
 {
     return radius;
 }
 
-void QuarterCircle::setRadius(float newRadius)
-{
-    radius = juce::jlimit(smallestRadius, biggestRadius, newRadius);
-    repaint();
-}
+
 
 
 void QuarterCircle::mouseEnter(const juce::MouseEvent& event)
@@ -343,7 +306,7 @@ void frequencyLineComponent::updateYFromHerz()
 {
 
     const float minHz = 20.0f;
-    const float maxHz = 20000.0f;§
+    const float maxHz = 20000.0f;
 
     float logHz = std::log10(herz);
     float norm = (logHz - std::log10(minHz)) / (std::log10(maxHz) - std::log10(minHz));
