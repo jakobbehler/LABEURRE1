@@ -213,7 +213,7 @@ const float maxY = 350.f;
 
 frequencyLineComponent::frequencyLineComponent()
 {
-    y_position_pixels = (maxY-minY)*0.5f ;
+    y_position_pixels = targetY = (maxY-minY)*0.5f;
     isDragging = false;
 }
 
@@ -226,7 +226,8 @@ void frequencyLineComponent::paint(juce::Graphics& g)
 
     // Display y-position label
     juce::Rectangle<int> textBounds(getWidth() - 90, y_position_pixels - 15, 100, 30);
-    g.drawText(juce::String(herz) + " Hz", textBounds, juce::Justification::left, false);
+    g.drawText(juce::String(juce::roundToInt(herz)) + " Hz", textBounds, juce::Justification::left, false);
+
     
     //BOUNDS FOR DEBUGGING
 //    g.setColour(juce::Colours::red);
@@ -294,8 +295,10 @@ float frequencyLineComponent::getYposition() const
 
 void frequencyLineComponent::setYposition(double y)
 {
-    y_position_pixels = static_cast<float>(y);
+    targetY = juce::jlimit(minY, maxY, static_cast<float>(y));
+    startTimerHz(60); // start interpolation
 }
+
 
 void frequencyLineComponent::updateHerzFromY()
 {
@@ -336,6 +339,24 @@ void frequencyLineComponent::updateYFromHerz()
 }
 
 
+void frequencyLineComponent::timerCallback()
+{
+    const float smoothing = 0.2f;
+    float diff = targetY - y_position_pixels;
 
+    if (std::abs(diff) < 0.3f)
+    {
+        y_position_pixels = targetY;
+        stopTimer();
+    }
+    else
+    {
+        y_position_pixels += diff * smoothing;
+    }
 
+    updateHerzFromY();
+    repaint();
 
+    if (onYChanged)
+        onYChanged(herz); // Optional: might want to gate this if not dragging
+}

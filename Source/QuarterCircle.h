@@ -77,7 +77,7 @@ private:
 
 
 
-class frequencyLineComponent : public juce::Component
+class frequencyLineComponent : public juce::Component, private juce::Timer
 {
 public:
     frequencyLineComponent();
@@ -98,9 +98,12 @@ public:
     void updateYFromHerz();
 
     std::function<void(float)> onYChanged;
+    
+    void timerCallback() override;
 
 private:
-    float y_position_pixels = 400.0f;
+    float y_position_pixels;
+    float targetY;
     float herz = 1000.0f;
 
     bool isDragging = false;
