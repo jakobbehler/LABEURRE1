@@ -50,9 +50,9 @@ void frequencyLines::paint(juce::Graphics& g)
 
         float y = (numTicks - 1 - i) * binHeight;
         
-        juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
-        g.setColour(dunkel_farb);
+        juce::Colour hell_farb = juce::Colour::fromString("#FFF7F7F7");
         
+        g.setColour(hell_farb);
         g.drawLine(0.0f, y, lineLength, y, 1.0f);
     }
 }

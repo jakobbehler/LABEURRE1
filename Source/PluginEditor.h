@@ -45,6 +45,7 @@ private:
     
     std::vector<float> fftBins;
 
+    juce::Image bg_image;
     
     SimpleEQAudioProcessor& audioProcessor;
     CircleComponent circle;

@@ -215,24 +215,44 @@ frequencyLineComponent::frequencyLineComponent()
 {
     y_position_pixels = targetY = (maxY-minY)*0.5f;
     isDragging = false;
+    
 }
-
 void frequencyLineComponent::paint(juce::Graphics& g)
 {
-    g.setColour(juce::Colours::black); //
+    float y = y_position_pixels;
+    float x;
+    float barwidth = 60.f;
+    float topmargin = 40.f;
 
-    // Draw horizontal frequency line
-    g.drawLine(0, y_position_pixels, getWidth() - 100, y_position_pixels, 2.0f);
+    // This logic assumes y is relative to the editor, not just the component
+    float yAdjusted = y + topmargin;
 
-    // Display y-position label
-    juce::Rectangle<int> textBounds(getWidth() - 90, y_position_pixels - 15, 100, 30);
+    if (yAdjusted < 174.f)
+    {
+        x = getWidth() - 65.f;
+    }
+    else if (yAdjusted < 327.f)
+    {
+        x = getWidth() - 65.f - (yAdjusted-174.f) * (101.f / 144.f);
+    }
+    else
+    {
+        x = getWidth() - 170.5f;
+    }
+
+    // Red line from curved X start to right edge
+    g.setColour(juce::Colours::red);
+    g.drawLine(x, y, getWidth(), y, 2.0f);
+
+    // Draw normal horizontal frequency line
+    g.setColour(juce::Colour::fromString("#FFF7F7F7"));
+    //g.drawLine(0, y, getWidth() - 100, y, 2.0f);
+
+    // Frequency label
+    juce::Rectangle<int> textBounds(getWidth() - 90, y - 15, 100, 30);
     g.drawText(juce::String(juce::roundToInt(herz)) + " Hz", textBounds, juce::Justification::left, false);
-
-    
-    //BOUNDS FOR DEBUGGING
-//    g.setColour(juce::Colours::red);
-//    g.drawRect(getLocalBounds());
 }
+
 
 void frequencyLineComponent::resized()
 {

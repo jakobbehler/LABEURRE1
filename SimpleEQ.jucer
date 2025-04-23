@@ -13,6 +13,7 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="GRE2kk" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
+    <FILE id="difsov" name="BEURRE_BG_1.png" compile="0" resource="1" file="assets/BEURRE_BG_1.png"/>
     <FILE id="GYuZaE" name="comp.png" compile="0" resource="1" file="assets/comp.png"/>
     <FILE id="bdDRGX" name="crush.png" compile="0" resource="1" file="assets/crush.png"/>
     <FILE id="bfICxa" name="dont.png" compile="0" resource="1" file="assets/dont.png"/>

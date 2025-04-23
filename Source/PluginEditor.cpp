@@ -16,7 +16,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
       knobSection(p)
 {
     
-        
+    bg_image = juce::ImageCache::getFromMemory(BinaryData::BEURRE_BG_1_png, BinaryData::BEURRE_BG_1_pngSize);
     
     addAndMakeVisible(circle);
     
@@ -24,7 +24,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     addAndMakeVisible(visualizer);
     addAndMakeVisible(knobSection);
     addAndMakeVisible(freqLine);
-    freqLine.toFront(false);
+    freqLine.toFront(true);
 
         
     setSize (1200, 600);
@@ -98,7 +98,10 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
         param->setValueNotifyingHost(param->convertTo0to1(herz));
 
         float y = freqLine.getYposition();
-        circle.setTopLeftPosition(100, y - 135);                                                     //⁉️
+        
+        //circle.setTopLeftPosition(100, y - 135);
+        circle.setBounds(circle.getX(), y - 135, circle.getWidth(), circle.getHeight());  // only moves vertically
+
     };
 
 
@@ -112,11 +115,13 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 //==============================================================================
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    juce::Colour hell_farb = juce::Colour::fromString("#FFABABAB");
+    juce::Colour hell_farb = juce::Colour::fromString("#FFF7F7F7");
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll(hell_farb);
+    //g.fillAll(hell_farb);
 //    g.setFont (juce::FontOptions (15.0f));
 //    g.drawFittedText ("Hello!", getLocalBounds(), juce::Justification::centred, 1);
+    
+    g.drawImage(bg_image, getLocalBounds().toFloat());
 }
 
 void SimpleEQAudioProcessorEditor::resized()
@@ -124,12 +129,21 @@ void SimpleEQAudioProcessorEditor::resized()
     const int editorW = getWidth();
     const int editorH = getHeight();
 
-    const int mainAreaX = 100;
+//    const int mainAreaX = 100;
+//    const int mainAreaY = 40;
+//    const int mainAreaW = 1000;
+//    const int mainAreaH = 350;
+    
+    const int mainAreaX = 0;
     const int mainAreaY = 40;
-    const int mainAreaW = 1000;
+    const int mainAreaW = 1200;
     const int mainAreaH = 350;
 
+
     const int knobAreaH = 170;
+    
+    
+    
 
     // Main visual layout
     juce::Rectangle<int> mainArea(mainAreaX, mainAreaY, mainAreaW, mainAreaH);
@@ -162,7 +176,7 @@ void SimpleEQAudioProcessorEditor::timerCallback()
         return 50.0f + norm * (190.f - 50.0f);
     };
 
-    // ✅ These match what's registered in the processor
+    // These match what's registered in the processor
     circle.getQuad(0).setRadius(denormalize(apvts.getRawParameterValue("distHighIntensity")->load()));
     circle.getQuad(1).setRadius(denormalize(apvts.getRawParameterValue("distLowIntensity")->load()));
     circle.getQuad(2).setRadius(denormalize(apvts.getRawParameterValue("compLowIntensity")->load()));
