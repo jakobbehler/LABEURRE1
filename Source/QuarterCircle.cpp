@@ -239,17 +239,18 @@ void frequencyLineComponent::paint(juce::Graphics& g)
     {
         x = getWidth() - 170.5f;
     }
-
+    
+    g.setColour(juce::Colour::fromString("#FFF7F7F7"));
     // Red line from curved X start to right edge
-    g.setColour(juce::Colours::red);
+
     g.drawLine(x, y, getWidth(), y, 2.0f);
 
     // Draw normal horizontal frequency line
-    g.setColour(juce::Colour::fromString("#FFF7F7F7"));
-    //g.drawLine(0, y, getWidth() - 100, y, 2.0f);
+    
+    g.drawLine(0, y, x-barwidth, y, 2.0f);
 
     // Frequency label
-    juce::Rectangle<int> textBounds(getWidth() - 90, y - 15, 100, 30);
+    juce::Rectangle<int> textBounds(x-55, y - 15, 100, 30);
     g.drawText(juce::String(juce::roundToInt(herz)) + " Hz", textBounds, juce::Justification::left, false);
 }
 
