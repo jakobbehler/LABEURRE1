@@ -9,13 +9,6 @@
 #include <JuceHeader.h>
 #include "frequencyLines.h"
 
-namespace
-{
-    // Number of lowest‑frequency bins we completely ignore (visual bottom rows)
-    constexpr int kSkippedLowBins = 10;
-    // Number of bars we want to see after skipping
-    constexpr int kVisibleBars   = 18;
-}
 
 //==============================================================================
 frequencyLines::frequencyLines()
@@ -26,37 +19,58 @@ frequencyLines::frequencyLines()
 frequencyLines::~frequencyLines() = default;
 
 //==============================================================================
+namespace
+{
+    constexpr int kSkipLow  = 6;   // four lowest-frequency bins (bottom rows)
+    constexpr int kSkipHigh = 2;   // one highest-frequency bin  (top row)
+
+    constexpr int kLines    = 20;  // how many lines you still want to show
+}
+
+//------------------------------------------------------------------
 void frequencyLines::paint (juce::Graphics& g)
 {
-    // Make sure we have enough data to draw the requested bins
-    if (static_cast<int> (smoothedBins.size()) < kSkippedLowBins + kVisibleBars)
+    constexpr int kSkipLow  = 3;   // 4 lowest-freq bins skipped
+    constexpr int kSkipHigh = 1;   // 1 highest-freq bin skipped
+    constexpr int kLines    = 20;  // lines to actually draw
+
+    if ((int) smoothedBins.size() < kSkipLow + kSkipHigh + kLines)
         return;
 
-    const auto bounds = getLocalBounds().toFloat();
-    const float height = bounds.getHeight();
-    const float width  = bounds.getWidth();
-    const float rowH   = height / static_cast<float> (kVisibleBars - 1);
+    const float bassDownScaleIntensity = 1.0f;       // 0 = off, 1 = full slope
+    float       bassDownScaleFactor    = 1.0f;
 
-    // We iterate bottom → top.  i = 0 is the first visible row above the skipped
-    // bins; its FFT index is (kSkippedLowBins).
-    for (int i = 0; i < kVisibleBars; ++i)
+    auto  bounds = getLocalBounds().toFloat();
+    float rowH   = bounds.getHeight() / (float) (kLines - 1);
+    float width  = bounds.getWidth();
+
+    for (int visIdx = 0; visIdx < kLines; ++visIdx)
     {
-        const int binIdx   = kSkippedLowBins + i;   // Offset past skipped bins
-        const float magDB  = smoothedBins[binIdx];  // FFT magnitude in dB
+        const int binIdx = kSkipLow + visIdx;        // skip four bottom bins
+        
+        
+        bassDownScaleFactor = juce::jmap((float) visIdx, 0.f, (float) (kLines - 1), 0.75f, 0.9f) * bassDownScaleIntensity;
+        
 
-        // Clamp, normalise and perceptually scale  ——> 0 … 1 range
-        const float clamped = juce::jlimit (-80.0f, 0.0f, magDB);
-        float norm          = juce::jmap (clamped, -70.0f, -10.0f, 0.0f, 1.0f);
-        norm                = juce::jlimit (0.0f, 1.0f, norm);
-        norm                = std::pow (norm,  1.1f);
+        float db      = smoothedBins[binIdx];
+        //float clamped = juce::jlimit (-80.f, 0.f, db);
+        float norm    = bassDownScaleFactor * bassDownScaleFactor * juce::jmap   (db, -70.f, -10.f, 0.f, 1.f);
+        norm          = std::pow (juce::jlimit (0.f, 1.f, 0.9f*norm), 2.5f);
 
-        const float lineLen = 15.0f + juce::jmap (norm, 0.0f, 1.0f, 0.0f, width - 15.0f);
-        const float y       = (kVisibleBars - 1 - i) * rowH; // bottom‑to‑top visual layout
+ 
+
+        /* ---------------- final line length ----------------------------- */
+        float len = 15.f +    juce::jmap (norm, 0.f, 1.f, 0.f, width - 15.f);
+
+        float y   = (kLines - 1 - visIdx) * rowH;
 
         g.setColour (juce::Colour::fromString ("#FFF7F7F7"));
-        g.drawLine (0.0f, y, lineLen, y, 1.0f);
+        g.drawLine  (0.f, y, len, y, 1.f);
     }
 }
+
+
+
 
 //==============================================================================
 void frequencyLines::resized() {}

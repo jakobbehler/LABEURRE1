@@ -74,6 +74,12 @@ void QuarterCircle::paint (juce::Graphics& g)
         case 1:  idxA = 2; idxB = 3; break; // red top-left
         case 2:  idxA = 0; idxB = 1; break; // blue bottom-left
         case 3:  idxA = 2; idxB = 4; break; // blue bottom-right
+            
+//        case 0:  idxA = 0; idxB = 1; break; // red top-right
+//        case 1:  idxA = 0; idxB = 1; break; // red top-left
+//        case 2:  idxA = 0; idxB = 1; break; // blue bottom-left
+//        case 3:  idxA = 0; idxB = 1; break; // blue bottom-right
+            
         default: break;
     }
 
