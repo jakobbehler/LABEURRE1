@@ -23,7 +23,7 @@ public:
     void rebuildArc();
     void timerCallback() override;
     
-    static constexpr int numFrames = 2;
+    static constexpr int numFrames = 5;
     
 private:
     float radius; // Store the radius of the quarter-circle

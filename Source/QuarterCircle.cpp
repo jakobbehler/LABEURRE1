@@ -39,15 +39,15 @@ void QuarterCircle::loadFramesIfNeeded()
     // fill the *class* arrays, not locals
     framesRed [0]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_1_png, BinaryData::grad_R_1_pngSize);
     framesRed [1]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_2_png, BinaryData::grad_R_2_pngSize);
-    //framesRed [2]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_3_png, BinaryData::grad_R_3_pngSize);
-    //framesRed [3]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_4_png, BinaryData::grad_R_4_pngSize);
-    //framesRed [4]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_5_png, BinaryData::grad_R_5_pngSize);
+    framesRed [2]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_3_png, BinaryData::grad_R_3_pngSize);
+    framesRed [3]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_4_png, BinaryData::grad_R_4_pngSize);
+    framesRed [4]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_5_png, BinaryData::grad_R_5_pngSize);
 
     framesBlue[0]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_1_png, BinaryData::grad_B_1_pngSize);
     framesBlue[1]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_2_png, BinaryData::grad_B_2_pngSize);
-    //framesBlue[2]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_3_png, BinaryData::grad_B_3_pngSize);
-    //framesBlue[3]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_4_png, BinaryData::grad_B_4_pngSize);
-    //framesBlue[4]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_5_png, BinaryData::grad_B_5_pngSize);
+    framesBlue[2]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_3_png, BinaryData::grad_B_3_pngSize);
+    framesBlue[3]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_4_png, BinaryData::grad_B_4_pngSize);
+    framesBlue[4]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_5_png, BinaryData::grad_B_5_pngSize);
 
     framesLoaded = true;
 }
@@ -60,16 +60,28 @@ juce::Path cachedArcPath;
 // Update `paint()`:
 void QuarterCircle::paint (juce::Graphics& g)
 {
-    const juce::Image* frames = (rotation == 0 || rotation == 1)
-                                ? framesRed
-                                : framesBlue;
+    loadFramesIfNeeded();
 
-    float norm   = juce::jmap (radius, smallestRadius, biggestRadius, 0.f, 1.f);
-    float scaled = norm * (numFrames - 1);
-    int   idxA   = (int) std::floor (scaled);
-    int   idxB   = juce::jlimit (0, numFrames - 1, idxA + 1);
-    float t      = scaled - (float) idxA;
+    // ---------- choose colour set -----------------------------------------
+    const juce::Image* frames   = (rotation <= 1) ? framesRed : framesBlue;
 
+    // ---------- pick which two frames to blend ----------------------------
+    int idxA = 0, idxB = 1;                 // defaults
+
+    switch (rotation)
+    {
+        case 0:  idxA = 0; idxB = 1; break; // red top-right
+        case 1:  idxA = 2; idxB = 3; break; // red top-left
+        case 2:  idxA = 0; idxB = 1; break; // blue bottom-left
+        case 3:  idxA = 2; idxB = 4; break; // blue bottom-right
+        default: break;
+    }
+
+    // ---------- compute blend factor (0…1) --------------------------------
+    float t = juce::jmap (radius, smallestRadius, biggestRadius, 0.f, 1.f);
+          t = juce::jlimit (0.f, 1.f, t);   // safety
+
+    // ---------- draw ------------------------------------------------------
     g.reduceClipRegion (cachedArcPath);
 
     g.setOpacity (1.f - t);
@@ -78,7 +90,7 @@ void QuarterCircle::paint (juce::Graphics& g)
     g.setOpacity (t);
     g.drawImage (frames[idxB], getLocalBounds().toFloat());
 
-    g.setOpacity (1.f);          // reset
+    g.setOpacity (1.f);
 }
 
 
