@@ -223,6 +223,7 @@ void frequencyLineComponent::paint(juce::Graphics& g)
     float x;
     float barwidth = 60.f;
     float topmargin = 40.f;
+    float textOffset;
 
     // This logic assumes y is relative to the editor, not just the component
     float yAdjusted = y + topmargin;
@@ -230,14 +231,17 @@ void frequencyLineComponent::paint(juce::Graphics& g)
     if (yAdjusted < 174.f)
     {
         x = getWidth() - 65.f;
+        textOffset = 0.f;
     }
     else if (yAdjusted < 327.f)
     {
         x = getWidth() - 65.f - (yAdjusted-174.f) * (101.f / 144.f);
+        textOffset = 3.f;
     }
     else
     {
         x = getWidth() - 170.5f;
+        textOffset = 5.f;
     }
     
     g.setColour(juce::Colour::fromString("#FFF7F7F7"));
@@ -250,7 +254,7 @@ void frequencyLineComponent::paint(juce::Graphics& g)
     g.drawLine(0, y, x-barwidth, y, 2.0f);
 
     // Frequency label
-    juce::Rectangle<int> textBounds(x-55, y - 15, 100, 30);
+    juce::Rectangle<int> textBounds(x-55+textOffset, y - 15, 100, 30);
     g.drawText(juce::String(juce::roundToInt(herz)) + " Hz", textBounds, juce::Justification::left, false);
 }
 

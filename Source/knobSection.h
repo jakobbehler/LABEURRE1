@@ -1,5 +1,3 @@
-#pragma once
-
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
@@ -8,10 +6,12 @@ class OtherLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
     OtherLookAndFeel();
+    int buttonType;
 
     void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height,
                           float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                           juce::Slider&) override;
+    
 };
 
 //==============================================================================
@@ -27,10 +27,12 @@ public:
 
     void attach(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID);
     void setBackgroundImage(const juce::Image& img);
-   
+    
+    void setThumbColour (juce::Colour c);
+    juce::Slider slider;
+    
 
 protected:
-    juce::Slider slider;
     OtherLookAndFeel otherLookAndFeel;
     juce::Image backgroundImage;
 
@@ -55,6 +57,7 @@ private:
     std::vector<std::pair<double, juce::String>> snapLabels;
     juce::Image img1, img2, img3;
 };
+
 
 
 //==============================================================================

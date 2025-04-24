@@ -14,6 +14,8 @@
 
 //==============================================================================
 
+
+
 OtherLookAndFeel::OtherLookAndFeel()
 {
     setColour(juce::Slider::thumbColourId, juce::Colours::red);
@@ -31,19 +33,26 @@ void OtherLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wid
     auto rw = radius * 2.0f;
     auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
 
-    juce::Colour hell_farb = juce::Colour::fromString("#FFABABAB");
-    juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
-
-    g.setColour(hell_farb);
+    
+    auto thumbColour = slider.findColour (juce::Slider::thumbColourId);
+    
+    g.setColour(thumbColour);
     g.fillEllipse(rx, ry, rw, rw);
 
     juce::Path p;
     auto pointerLength = radius * 0.7f;
     auto pointerThickness = 2.0f;
+    
     p.addRectangle(-pointerThickness * 0.5f, -radius, pointerThickness, pointerLength);
     p.applyTransform(juce::AffineTransform::rotation(angle).translated(centreX, centreY));
-
-    g.setColour(dunkel_farb);
+    
+    juce::Colour pointerColour = juce::Colour::fromString("#FFF7F7F7");
+    
+    if (thumbColour.getPerceivedBrightness() > 0.85f)
+        pointerColour = juce::Colour::fromString("#FF6184FF");
+ 
+    g.setColour (pointerColour);
+    g.fillPath (p);
     g.fillPath(p);
 }
 
@@ -104,6 +113,10 @@ void CustomKnobComponent::setBackgroundImage(const juce::Image& img)
     backgroundImage = img;
 }
 
+void CustomKnobComponent::setThumbColour (juce::Colour c)
+{
+    slider.setColour (juce::Slider::thumbColourId, c);
+}
 
 
 //==============================================================================
@@ -201,7 +214,25 @@ knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
     
     juce::Image hiCutImg = juce::ImageCache::getFromMemory(BinaryData::hicut_png, BinaryData::hicut_pngSize);
     highcutKnob.setBackgroundImage(hiCutImg);
+    
+    // start and end point for hicut slide
+    const float startAngle = juce::MathConstants<float>::pi * 1.7f;
+    const float endAngle   = startAngle + juce::MathConstants<float>::pi * 0.85f;
 
+    highcutKnob.slider.setRotaryParameters (startAngle, endAngle, true);
+
+    
+    
+    
+    juce::Colour blau = juce::Colour::fromString("#FF6184FF");
+    juce::Colour rot = juce::Colour::fromString("#FFF0597C");
+    juce::Colour white = juce::Colour::fromString("#FFF7F7F7");
+    
+    compressionKnob.setThumbColour (blau);
+    saturationKnob.setThumbColour  (rot);
+    highcutKnob  .setThumbColour  (white); // or blue/red etc.
+
+    
     compressionKnob.attach(proc.apvts, "compressorSpeed");
     saturationKnob.attach(proc.apvts, "distortionType");
     highcutKnob.attach(proc.apvts, "highCutFreq");
@@ -229,7 +260,7 @@ void knobSection::paint(juce::Graphics& g)
 //        int imageWidth = 270.f;
 //        int imageHeight = 350.f;
 //
-//    
+//
 //
 //        g.drawImageWithin(nameImage, 0, 0, imageWidth, imageHeight, juce::Justification::topLeft);
 //

@@ -709,10 +709,10 @@ bool FFTDataGenerator::produceFFTData(std::vector<float>& outputBins)
     
     outputBins.clear();
 
-    const int desiredBins = 20;
-    const int neighborhood = 3;
+    const int desiredBins = 28;
+    const int neighborhood = 0;
 
-    float minFreq = 20.0f;
+    float minFreq = 40.0f;
     float maxFreq = sampleRate / 2.0f;
     int fftHalf = fftSize / 2;
 
