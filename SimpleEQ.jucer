@@ -22,6 +22,16 @@
     <FILE id="sFNOt1" name="frequencyLines.h" compile="0" resource="0"
           file="Source/frequencyLines.h"/>
     <FILE id="fF5yzP" name="glue.png" compile="0" resource="1" file="assets/glue.png"/>
+    <FILE id="q5UOmG" name="grad_B_1.png" compile="0" resource="1" file="assets/grad_B_1.png"/>
+    <FILE id="r0ZAuw" name="grad_B_2.png" compile="0" resource="1" file="assets/grad_B_2.png"/>
+    <FILE id="JjaS5x" name="grad_B_3.png" compile="0" resource="1" file="assets/grad_B_3.png"/>
+    <FILE id="wo7n5D" name="grad_B_4.png" compile="0" resource="1" file="assets/grad_B_4.png"/>
+    <FILE id="DNzRM5" name="grad_B_5.png" compile="0" resource="1" file="assets/grad_B_5.png"/>
+    <FILE id="U8ZSO7" name="grad_R_1.png" compile="0" resource="1" file="assets/grad_R_1.png"/>
+    <FILE id="hl9wjT" name="grad_R_2.png" compile="0" resource="1" file="assets/grad_R_2.png"/>
+    <FILE id="hvmoKI" name="grad_R_3.png" compile="0" resource="1" file="assets/grad_R_3.png"/>
+    <FILE id="YO5HFq" name="grad_R_4.png" compile="0" resource="1" file="assets/grad_R_4.png"/>
+    <FILE id="Z4Azvc" name="grad_R_5.png" compile="0" resource="1" file="assets/grad_R_5.png"/>
     <FILE id="goXARJ" name="hicut.png" compile="0" resource="1" file="assets/hicut.png"/>
     <FILE id="sLjWrT" name="knobSection.cpp" compile="1" resource="0" file="Source/knobSection.cpp"/>
     <FILE id="B2QAAF" name="knobSection.h" compile="0" resource="0" file="Source/knobSection.h"/>

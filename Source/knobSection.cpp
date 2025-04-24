@@ -151,7 +151,7 @@ void SnapKnob::timerCallback()
     double v   = slider.getValue();
     double diff= targetValue - v;
 
-    if (std::abs (diff) < 0.00005)                   // close enough
+    if (std::abs (diff) < 0.00005)                   // close enough I guess
     {
         slider.setValue (targetValue, juce::dontSendNotification);
         stopTimer();

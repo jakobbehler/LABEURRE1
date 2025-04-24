@@ -1,5 +1,11 @@
 #include <JuceHeader.h>
 #include "QuarterCircle.h"
+#include "BinaryData.h"
+
+
+juce::Image QuarterCircle::framesRed [numFrames];
+juce::Image QuarterCircle::framesBlue[numFrames];
+bool        QuarterCircle::framesLoaded = false;
 
 // CIRCLE VARIABLES GLOBAL
 
@@ -9,11 +15,16 @@ const float biggestR = 170.f;
 // Constructor: Initialize radius
 QuarterCircle::QuarterCircle(int rotationIndex)
 {
+    
+    
     this->rotation = rotationIndex; // member variable stuff in constructor!!!!
     radius = targetRadius = 75.f;
     smallestRadius = smallestR;
     biggestRadius = biggestR;
+    loadFramesIfNeeded();
     
+    
+
 }
 
 
@@ -21,17 +32,55 @@ QuarterCircle::~QuarterCircle()
 {
 }
 
+void QuarterCircle::loadFramesIfNeeded()
+{
+    if (framesLoaded) return;
+
+    // fill the *class* arrays, not locals
+    framesRed [0]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_1_png, BinaryData::grad_R_1_pngSize);
+    framesRed [1]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_2_png, BinaryData::grad_R_2_pngSize);
+    //framesRed [2]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_3_png, BinaryData::grad_R_3_pngSize);
+    //framesRed [3]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_4_png, BinaryData::grad_R_4_pngSize);
+    //framesRed [4]  = juce::ImageCache::getFromMemory (BinaryData::grad_R_5_png, BinaryData::grad_R_5_pngSize);
+
+    framesBlue[0]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_1_png, BinaryData::grad_B_1_pngSize);
+    framesBlue[1]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_2_png, BinaryData::grad_B_2_pngSize);
+    //framesBlue[2]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_3_png, BinaryData::grad_B_3_pngSize);
+    //framesBlue[3]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_4_png, BinaryData::grad_B_4_pngSize);
+    //framesBlue[4]  = juce::ImageCache::getFromMemory (BinaryData::grad_B_5_png, BinaryData::grad_B_5_pngSize);
+
+    framesLoaded = true;
+}
+
+
 
 // Add a member:
 juce::Path cachedArcPath;
 
 // Update `paint()`:
-void QuarterCircle::paint(juce::Graphics& g)
+void QuarterCircle::paint (juce::Graphics& g)
 {
-    juce::Colour dunkel_farb = juce::Colour::fromString("#FF202426");
-    g.setColour(dunkel_farb);
-    g.fillPath(cachedArcPath);
+    const juce::Image* frames = (rotation == 0 || rotation == 1)
+                                ? framesRed
+                                : framesBlue;
+
+    float norm   = juce::jmap (radius, smallestRadius, biggestRadius, 0.f, 1.f);
+    float scaled = norm * (numFrames - 1);
+    int   idxA   = (int) std::floor (scaled);
+    int   idxB   = juce::jlimit (0, numFrames - 1, idxA + 1);
+    float t      = scaled - (float) idxA;
+
+    g.reduceClipRegion (cachedArcPath);
+
+    g.setOpacity (1.f - t);
+    g.drawImage (frames[idxA], getLocalBounds().toFloat());
+
+    g.setOpacity (t);
+    g.drawImage (frames[idxB], getLocalBounds().toFloat());
+
+    g.setOpacity (1.f);          // reset
 }
+
 
 // Rebuild arc when resized or radius changes:
 void QuarterCircle::resized()
@@ -75,22 +124,30 @@ void QuarterCircle::rebuildArc()
 
     float x = 0.0f, y = 0.0f;
     float startArc = 0.0f, endArc = 0.0f;
+    
+    juce::Colour blau = juce::Colour::fromString("#FF6184FF");
+    juce::Colour rot = juce::Colour::fromString("#FFF0597C");
 
+    
     switch (rotation)
     {
         case 0:
+            
+            fillColour = rot;
             x = -radius; y = heightF - radius;
             centerPoint = { 0.0f, heightF };
             startArc = 0.0f;
             endArc = juce::MathConstants<float>::halfPi;
             break;
         case 1:
+            fillColour = rot;
             x = -radius; y = -radius;
             centerPoint = { 0.0f, 0.0f };
             startArc = juce::MathConstants<float>::halfPi;
             endArc = juce::MathConstants<float>::pi;
             break;
         case 3:
+            fillColour = blau;
             x = widthF - radius; y = heightF - radius;
             centerPoint = { widthF, heightF };
             startArc = juce::MathConstants<float>::halfPi;
@@ -98,6 +155,7 @@ void QuarterCircle::rebuildArc()
             break;
         case 2:
         default:
+            fillColour = blau;
             x = widthF - radius; y = -radius;
             centerPoint = { widthF, 0.0f };
             startArc = juce::MathConstants<float>::pi;

@@ -4,10 +4,6 @@
 
 
 
-
-
-
-
 class QuarterCircle : public juce::Component, private juce::Timer
 {
 public:
@@ -27,6 +23,8 @@ public:
     void rebuildArc();
     void timerCallback() override;
     
+    static constexpr int numFrames = 2;
+    
 private:
     float radius; // Store the radius of the quarter-circle
     float targetRadius;
@@ -37,16 +35,21 @@ private:
     juce::Point<float> centerPoint;
     juce::Path cachedArcPath;
     
+    juce::Colour fillColour = juce::Colour::fromString("#FFF7F7F7");
+    juce::FillType fill;
     
-    
+    static juce::Image framesRed[numFrames];
+    static juce::Image framesBlue[numFrames];
+    static bool        framesLoaded;          // guard (idk the GUI thread has issues with timers???)
+    static void        loadFramesIfNeeded();  // helper
     
     bool isHovered;
     
-    juce::Image gradientImage;  // Store the gradient image
+   // juce::Image gradientImage;  // Store the gradient image
 
-    void generateGradient();  // Step 1: Create gradient
-    void drawGrain(juce::Graphics& g);  // Step 3: Generate grain effect
-    float halton(int index, int base);  // Generate quasi-random points
+    //void generateGradient();  // Step 1: Create gradient
+    //void drawGrain(juce::Graphics& g);  // Step 3: Generate grain effect
+    //float halton(int index, int base);  // Generate quasi-random points
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (QuarterCircle)
 };
 
