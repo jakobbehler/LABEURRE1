@@ -16,7 +16,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
       knobSection(p)
 {
     
-    bg_image = juce::ImageCache::getFromMemory(BinaryData::BEURRE_BG_1_png, BinaryData::BEURRE_BG_1_pngSize);
+    bg_image = juce::ImageCache::getFromMemory(BinaryData::BEURRE_BG_2_png, BinaryData::BEURRE_BG_2_pngSize);
     
     addAndMakeVisible(circle);
     

@@ -176,11 +176,11 @@ void SnapKnob::paint(juce::Graphics& g)
 //==============================================================================
 knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
 {
-    nameImage = juce::ImageCache::getFromMemory(BinaryData::name_png, BinaryData::name_pngSize);
+    //nameImage = juce::ImageCache::getFromMemory(BinaryData::name_png, BinaryData::name_pngSize);
 
     
     juce::Image glue  = juce::ImageCache::getFromMemory(BinaryData::glue_png, BinaryData::glue_pngSize);
-    juce::Image tame  = juce::ImageCache::getFromMemory(BinaryData::comp_png, BinaryData::comp_pngSize);
+    juce::Image tame  = juce::ImageCache::getFromMemory(BinaryData::tame_png, BinaryData::tame_pngSize);
     juce::Image ott   = juce::ImageCache::getFromMemory(BinaryData::ott_png,  BinaryData::ott_pngSize);
 
     compressionKnob.configureSnapPoints({
@@ -217,37 +217,38 @@ knobSection::~knobSection() {}
 
 void knobSection::paint(juce::Graphics& g)
 {
-    g.setColour(juce::Colour::fromString("#FF202426"));
-    g.fillRect(getLocalBounds());
+    //g.setColour(juce::Colour::fromString("#FF202426"));
+    //g.fillRect(getLocalBounds());
 
-    g.setColour(juce::Colour::fromString("#FFABABAB"));
-    g.drawLine(270.0f, 0.0f, 270.0f, (float)getHeight(), 1.0f);
+    //g.setColour(juce::Colour::fromString("#FFABABAB"));
+    //g.drawLine(270.0f, 0.0f, 270.0f, (float)getHeight(), 1.0f);
 
-    if (nameImage.isValid())
-    {
-
-        int imageWidth = 270.f;
-        int imageHeight = 350.f;
-
-    
-
-        g.drawImageWithin(nameImage, 0, 0, imageWidth, imageHeight, juce::Justification::topLeft);
-
-    }
+//    if (nameImage.isValid())
+//    {
+//
+//        int imageWidth = 270.f;
+//        int imageHeight = 350.f;
+//
+//    
+//
+//        g.drawImageWithin(nameImage, 0, 0, imageWidth, imageHeight, juce::Justification::topLeft);
+//
+//    }
 }
 
 void knobSection::resized()
 {
-    const int knobComponentWidth = 420; // 180px left + 50px knob + 180px right
-    const int knobHeight = 350;         // same height so background image stays proportional
-    const int spacing = -158;             // overlap!
+    const int knobComponentWidth = 175; // 180px left + 50px knob + 180px right
+    const int knobHeight = 320;         // same height so background image stays proportional
+    const int spacing1 = 83;
+    const int spacing2 = 89;
     
     // no extra spacing needed between components
     
-    const int startX = 270;             // account for name image on left
+    const int startX = 387;             // account for name image on left
     const int centerY = getHeight() / 2 - knobHeight / 2;
 
     compressionKnob.setBounds(startX, centerY, knobComponentWidth, knobHeight);
-    saturationKnob.setBounds(startX + knobComponentWidth + spacing, centerY, knobComponentWidth, knobHeight);
-    highcutKnob.setBounds(startX + (knobComponentWidth + spacing) * 2, centerY, knobComponentWidth, knobHeight);
+    saturationKnob.setBounds(startX + knobComponentWidth + spacing1, centerY, knobComponentWidth, knobHeight);
+    highcutKnob.setBounds(startX + knobComponentWidth*2+ spacing1 + spacing2, centerY, knobComponentWidth, knobHeight);
 }

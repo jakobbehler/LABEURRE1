@@ -14,23 +14,23 @@
       <FILE id="GRE2kk" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
     <FILE id="difsov" name="BEURRE_BG_1.png" compile="0" resource="1" file="assets/BEURRE_BG_1.png"/>
-    <FILE id="GYuZaE" name="comp.png" compile="0" resource="1" file="assets/comp.png"/>
-    <FILE id="bdDRGX" name="crush.png" compile="0" resource="1" file="assets/crush.png"/>
-    <FILE id="bfICxa" name="dont.png" compile="0" resource="1" file="assets/dont.png"/>
+    <FILE id="oCi49I" name="BEURRE_BG_2.png" compile="0" resource="1" file="assets/BEURRE_BG_2.png"/>
+    <FILE id="sV2do4" name="crush.png" compile="0" resource="1" file="assets/crush.png"/>
+    <FILE id="nF4gkF" name="dont.png" compile="0" resource="1" file="assets/dont.png"/>
     <FILE id="t1gpbm" name="frequencyLines.cpp" compile="1" resource="0"
           file="Source/frequencyLines.cpp"/>
     <FILE id="sFNOt1" name="frequencyLines.h" compile="0" resource="0"
           file="Source/frequencyLines.h"/>
-    <FILE id="jBu0Fj" name="glue.png" compile="0" resource="1" file="assets/glue.png"/>
-    <FILE id="XNoJ44" name="hicut.png" compile="0" resource="1" file="assets/hicut.png"/>
+    <FILE id="i2X6fL" name="glue.png" compile="0" resource="1" file="assets/glue.png"/>
+    <FILE id="sSqivJ" name="hicut.png" compile="0" resource="1" file="assets/hicut.png"/>
     <FILE id="sLjWrT" name="knobSection.cpp" compile="1" resource="0" file="Source/knobSection.cpp"/>
     <FILE id="B2QAAF" name="knobSection.h" compile="0" resource="0" file="Source/knobSection.h"/>
-    <FILE id="lW9lyb" name="name.png" compile="0" resource="1" file="assets/name.png"/>
-    <FILE id="YkIAYF" name="ott.png" compile="0" resource="1" file="assets/ott.png"/>
+    <FILE id="ABZUEj" name="ott.png" compile="0" resource="1" file="assets/ott.png"/>
     <FILE id="fnmvkp" name="QuarterCircle.cpp" compile="1" resource="0"
           file="Source/QuarterCircle.cpp"/>
     <FILE id="Jzg0vl" name="QuarterCircle.h" compile="0" resource="0" file="Source/QuarterCircle.h"/>
-    <FILE id="a1oGZP" name="warm.png" compile="0" resource="1" file="assets/warm.png"/>
+    <FILE id="nJTaam" name="tame.png" compile="0" resource="1" file="assets/tame.png"/>
+    <FILE id="ai8P9a" name="warm.png" compile="0" resource="1" file="assets/warm.png"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
