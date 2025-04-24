@@ -41,7 +41,7 @@ protected:
 };
 
 //==============================================================================
-class SnapKnob : public CustomKnobComponent
+class SnapKnob : public CustomKnobComponent, private juce::Timer
 {
 public:
     SnapKnob();
@@ -54,6 +54,10 @@ public:
     void paint(juce::Graphics& g) override;
 
 private:
+    
+    double targetValue   = 0.0;
+    void   timerCallback() override;
+    
     std::vector<std::pair<double, juce::String>> snapLabels;
     juce::Image img1, img2, img3;
 };

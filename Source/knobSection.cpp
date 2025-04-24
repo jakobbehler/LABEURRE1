@@ -122,23 +122,46 @@ void CustomKnobComponent::setThumbColour (juce::Colour c)
 //==============================================================================
 SnapKnob::SnapKnob()
 {
-    slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-    slider.setRange(0.0, 1.0, 0.01);
+    slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    slider.setTextBoxStyle (juce::Slider::NoTextBox, true, 0, 0);
+    slider.setRange (0.0, 1.0, 0.01);
 
-    slider.onValueChange = [this]() {
-        double value = slider.getValue();
+    slider.onValueChange = [this]
+    {
         if (snapLabels.empty()) return;
 
-        double closest = snapLabels[0].first;
-        for (auto& [pos, _] : snapLabels)
-            if (std::abs(pos - value) < std::abs(closest - value))
-                closest = pos;
+        // ----- 1. find nearest snap-point ----------------
+        double v = slider.getValue();
+        targetValue = snapLabels.front().first;
 
-        if (value != closest)
-            slider.setValue(closest, juce::dontSendNotification);
+        for (auto& [p, _] : snapLabels)
+            if (std::abs (p - v) < std::abs (targetValue - v))
+                targetValue = p;
+
+        // ----- 2. start interpolation if not already there
+        if (std::abs (v - targetValue) > 0.001)
+            startTimerHz (60);
     };
 }
+
+void SnapKnob::timerCallback()
+{
+    constexpr double smoothing = 0.30;              // 0…1  (smaller = slower)
+
+    double v   = slider.getValue();
+    double diff= targetValue - v;
+
+    if (std::abs (diff) < 0.00005)                   // close enough
+    {
+        slider.setValue (targetValue, juce::dontSendNotification);
+        stopTimer();
+    }
+    else
+    {
+        slider.setValue (v + diff * smoothing, juce::dontSendNotification);
+    }
+}
+
 
 void SnapKnob::configureSnapPoints(const std::vector<std::pair<double, juce::String>>& labels,
                                    const juce::Image& image1,
