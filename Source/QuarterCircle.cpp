@@ -115,18 +115,19 @@ void QuarterCircle::setRadius(float newRadius)
 
 void QuarterCircle::timerCallback()
 {
-    float smoothing = 0.15f;
+    float smoothing = 0.25f;
 
     float diff = targetRadius - radius;
-    if (std::abs(diff) < 0.1f)
+    if (std::abs(diff) < 0.5f)
     {
         radius = targetRadius;
-        stopTimer(); // Done interpolating
+        stopTimer();
     }
     else
     {
         radius += diff * smoothing;
     }
+
 
     rebuildArc();
     repaint();
@@ -401,6 +402,7 @@ void frequencyLineComponent::setYposition(double y)
 }
 
 
+
 void frequencyLineComponent::updateHerzFromY()
 {
     
@@ -427,6 +429,9 @@ void frequencyLineComponent::setHerz(float newHerz)
     repaint();
 }
 
+
+
+
 void frequencyLineComponent::updateYFromHerz()
 {
 
@@ -440,24 +445,54 @@ void frequencyLineComponent::updateYFromHerz()
 }
 
 
+//void frequencyLineComponent::timerCallback()
+//{
+//    const float smoothing = 0.2f;
+//    float diff = targetY - y_position_pixels;
+//
+//    if (std::abs(diff) < 0.3f)
+//    {
+//        y_position_pixels = targetY;
+//        stopTimer();
+//    }
+//    else
+//    {
+//        y_position_pixels += diff * smoothing;
+//    }
+//
+//    updateHerzFromY();
+//    repaint();
+//
+//    if (onYChanged)
+//        onYChanged(herz); // Optional: might want to gate this if not dragging
+//}
+
+void frequencyLineComponent::setTargetHerz(float newTargetHerz)
+{
+    targetHerz = juce::jlimit(20.0f, 20000.0f, newTargetHerz);
+    startTimerHz(60); // start smoothing timer
+}
+
 void frequencyLineComponent::timerCallback()
 {
-    const float smoothing = 0.2f;
-    float diff = targetY - y_position_pixels;
+    constexpr float smoothing = 0.2f;
+    float diff = targetHerz - herz;
 
-    if (std::abs(diff) < 0.3f)
+    if (std::abs(diff) < 1.0f)
     {
-        y_position_pixels = targetY;
+        herz = targetHerz;
         stopTimer();
     }
     else
     {
-        y_position_pixels += diff * smoothing;
+        herz += diff * smoothing;
     }
 
-    updateHerzFromY();
+    updateYFromHerz();
     repaint();
 
+
     if (onYChanged)
-        onYChanged(herz); // Optional: might want to gate this if not dragging
+        onYChanged(y_position_pixels);
 }
+

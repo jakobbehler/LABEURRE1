@@ -28,7 +28,7 @@
 
 
 
-class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Timer
+class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Timer, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
     SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor&);
@@ -38,7 +38,8 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void timerCallback() override;
-
+    void syncCircleWithFreqLine();
+    
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
@@ -55,7 +56,9 @@ private:
     knobSection knobSection;
     frequencyLineComponent freqLine;
     
-    
+    // GUI listener!!!
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
+        
     
 
     

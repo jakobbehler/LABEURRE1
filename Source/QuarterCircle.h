@@ -103,11 +103,17 @@ public:
     std::function<void(float)> onYChanged;
     
     void timerCallback() override;
+    
+    
+    
+    void setTargetHerz(float newTargetHerz);
+
 
 private:
     float y_position_pixels;
     float targetY;
     float herz = 1000.0f;
+    float targetHerz = 1000.0f;
 
     bool isDragging = false;
 

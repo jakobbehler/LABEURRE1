@@ -429,7 +429,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SimpleEQAudioProcessor::crea
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bandsplit_frequency", 1),
                                                                  "bandsplit_frequency",
                                                                  juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
-                                                                 750.f));
+                                                                 660.f));
     // COMP ----
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("compLowIntensity", 1),
                                                                  "compLowIntensity",
