@@ -203,16 +203,14 @@ void QuarterCircle::rebuildArc()
 // mouse drag to update the radius
 void QuarterCircle::mouseDrag(const juce::MouseEvent& event)
 {
-
     float newRadius = event.position.getDistanceFrom(centerPoint);
-    radius = juce::jlimit(smallestR, biggestR, newRadius); // Constrain radius
-    
-    radius = juce::jlimit(smallestRadius,  biggestRadius , newRadius);
-    repaint();
-    
+    targetRadius = juce::jlimit(smallestRadius, biggestRadius, newRadius);
+    startTimerHz(60);
+
     if (onRadiusChanged)
-            onRadiusChanged(radius);
+        onRadiusChanged(targetRadius);
 }
+
 
 
 // Getter for radius
