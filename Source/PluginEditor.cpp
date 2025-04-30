@@ -131,6 +131,7 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener("compLowIntensity", this);
     audioProcessor.apvts.removeParameterListener("compHighIntensity", this);
 
+    juce::ImageCache::releaseUnusedImages();
 
 }
 

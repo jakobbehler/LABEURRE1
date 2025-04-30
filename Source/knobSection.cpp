@@ -220,7 +220,7 @@ void SnapKnob::mouseUp(const juce::MouseEvent& event)
     {
         currentSnapIndex = (currentSnapIndex + 1) % snapLabels.size();
         slider.setValue(snapLabels[currentSnapIndex].first, juce::sendNotificationSync);
-        DBG("✅ Snap clicked! Index = " << currentSnapIndex);
+        //DBG("Snap clicked! Index = " << currentSnapIndex);
     }
 }
 
