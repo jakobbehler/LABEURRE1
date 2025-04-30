@@ -15,17 +15,18 @@ const float biggestR = 170.f;
 // Constructor: Initialize radius
 QuarterCircle::QuarterCircle(int rotationIndex)
 {
-    
-    
-    this->rotation = rotationIndex; // member variable stuff in constructor!!!!
+    this->rotation = rotationIndex;
     radius = targetRadius = 75.f;
     smallestRadius = smallestR;
     biggestRadius = biggestR;
-    loadFramesIfNeeded();
-    
-    
 
+    
+    static std::once_flag loadOnce; // no longer loads every timer tick, yay!
+    std::call_once(loadOnce, []() {
+        loadFramesIfNeeded();
+    });
 }
+
 
 
 QuarterCircle::~QuarterCircle()
@@ -110,28 +111,33 @@ void QuarterCircle::resized()
 void QuarterCircle::setRadius(float newRadius)
 {
     targetRadius = juce::jlimit(smallestRadius, biggestRadius, newRadius);
-    startTimerHz(60); // Start interpolating
+    startTimerHz(100); // Start interpolating
 }
 
 void QuarterCircle::timerCallback()
 {
-    float smoothing = 0.25f;
+    constexpr float smoothing = 0.25f;
 
     float diff = targetRadius - radius;
+    float movement = diff * smoothing;
+
     if (std::abs(diff) < 0.5f)
     {
         radius = targetRadius;
-        stopTimer();
-    }
-    else
-    {
-        radius += diff * smoothing;
+        rebuildArc();
+        repaint();       // Final repaint before stopping
+        stopTimer();     // Safe to call after repaint
+        return;
     }
 
-
+    radius += movement;
     rebuildArc();
-    repaint();
+
+    if (std::abs(movement) > 0.01f)
+        repaint();
 }
+
+
 
 
 // === New helper ===
