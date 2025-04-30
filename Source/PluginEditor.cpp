@@ -97,10 +97,19 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     
     freqLine.onYChanged = [this](float /*yPosition*/)
     {
+        auto* param = audioProcessor.apvts.getParameter("bandsplit_frequency");
+        float newVal = param->convertTo0to1(freqLine.getHerz());
+        float currentVal = param->getValue();
+
+        if (std::abs(currentVal - newVal) > 0.001f)
+        {
+            DBG("[freqLine] onYChanged fired. Updating param to Hz: " << freqLine.getHerz());
+            param->setValueNotifyingHost(newVal);
+        }
+
         syncCircleWithFreqLine();
     };
 
-    
     audioProcessor.apvts.addParameterListener("bandsplit_frequency", this);
     audioProcessor.apvts.addParameterListener("distHighIntensity", this);
     audioProcessor.apvts.addParameterListener("distLowIntensity", this);
