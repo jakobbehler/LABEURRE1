@@ -142,11 +142,16 @@ SnapKnob::SnapKnob()
         if (std::abs (v - targetValue) > 0.001)
             startTimerHz (60);
     };
+    
+    slider.addMouseListener(this, false);
+
+
+
 }
 
 void SnapKnob::timerCallback()
 {
-    constexpr double smoothing = 0.30;              // 0…1  (smaller = slower)
+    constexpr double smoothing = 0.30;             // 0…1  (smaller = slower)
 
     double v   = slider.getValue();
     double diff= targetValue - v;
@@ -207,6 +212,18 @@ void SnapKnob::paint(juce::Graphics& g)
         g.drawImage(*img, x, y, targetWidth, targetHeight, 0, 0, img->getWidth(), img->getHeight());
     }
 }
+
+
+void SnapKnob::mouseUp(const juce::MouseEvent& event)
+{
+    if (event.mouseWasClicked() && !snapLabels.empty())
+    {
+        currentSnapIndex = (currentSnapIndex + 1) % snapLabels.size();
+        slider.setValue(snapLabels[currentSnapIndex].first, juce::sendNotificationSync);
+        DBG("✅ Snap clicked! Index = " << currentSnapIndex);
+    }
+}
+
 
 
 //==============================================================================

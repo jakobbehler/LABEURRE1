@@ -31,6 +31,7 @@ public:
     void setThumbColour (juce::Colour c);
     juce::Slider slider;
     
+    
 
 protected:
     OtherLookAndFeel otherLookAndFeel;
@@ -60,6 +61,10 @@ private:
     
     std::vector<std::pair<double, juce::String>> snapLabels;
     juce::Image img1, img2, img3;
+    
+    void mouseUp(const juce::MouseEvent& event) override;
+    int currentSnapIndex;
+
 };
 
 
