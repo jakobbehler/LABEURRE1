@@ -31,11 +31,16 @@ public:
     void setThumbColour (juce::Colour c);
     juce::Slider slider;
     
+    void mouseDown(const juce::MouseEvent&) override { setMouseCursor(clickCursor); }
+    void mouseUp(const juce::MouseEvent&) override   { setMouseCursor(normalCursor); }
     
 
 protected:
     OtherLookAndFeel otherLookAndFeel;
     juce::Image backgroundImage;
+
+    juce::MouseCursor normalCursor;
+    juce::MouseCursor clickCursor;
 
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
@@ -64,6 +69,14 @@ private:
     
     void mouseUp(const juce::MouseEvent& event) override;
     int currentSnapIndex;
+    
+    void mouseDown(const juce::MouseEvent&) override { setMouseCursor(clickCursor); }
+
+    
+    juce::MouseCursor normalCursor;
+    juce::MouseCursor clickCursor;
+
+    
 
 };
 
@@ -79,6 +92,9 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    
+    void mouseDown(const juce::MouseEvent&) override { setMouseCursor(clickCursor); }
+    void mouseUp(const juce::MouseEvent&) override   { setMouseCursor(normalCursor); }
 
 private:
     SimpleEQAudioProcessor& processor;
@@ -88,6 +104,9 @@ private:
     CustomKnobComponent highcutKnob;
     
     juce::Image nameImage;
+    
+    juce::MouseCursor normalCursor;
+    juce::MouseCursor clickCursor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(knobSection)
 };

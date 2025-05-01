@@ -40,6 +40,13 @@ public:
     void timerCallback() override;
     void syncCircleWithFreqLine();
     
+    //void addMouseListenerToAll(juce::Component* listener);
+    void mouseDown(const juce::MouseEvent&) override { setMouseCursor(clickCursor); }
+    void mouseUp(const juce::MouseEvent&) override   { setMouseCursor(normalCursor); }
+
+    
+    void addMouseListenerToChildren(juce::MouseListener* listener);
+
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
@@ -47,6 +54,10 @@ private:
     std::vector<float> fftBins;
 
     juce::Image bg_image;
+    
+    juce::MouseCursor normalCursor;
+    juce::MouseCursor clickCursor;
+
     
     SimpleEQAudioProcessor& audioProcessor;
     CircleComponent circle;

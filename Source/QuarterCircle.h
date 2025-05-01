@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 
-
+class SimpleEQAudioProcessorEditor; // forward declare!
 
 class QuarterCircle : public juce::Component, private juce::Timer
 {
@@ -25,8 +25,18 @@ public:
     
     static constexpr int numFrames = 5;
     
+    
+    void mouseDown(const juce::MouseEvent&) override { setMouseCursor(clickCursor); }
+    void mouseUp(const juce::MouseEvent&) override   { setMouseCursor(normalCursor); }
+
+    
+
+    
 private:
+    
+    
     float radius; // Store the radius of the quarter-circle
+    
     float targetRadius;
     float smallestRadius;
     float biggestRadius;
@@ -44,6 +54,13 @@ private:
     static void        loadFramesIfNeeded();  // helper
     
     bool isHovered;
+    bool isDragging = false;
+    
+    juce::MouseCursor normalCursor;
+    juce::MouseCursor clickCursor;
+    
+    class SimpleEQAudioProcessorEditor; // forward declaration
+    SimpleEQAudioProcessorEditor* editorRef = nullptr;
     
    // juce::Image gradientImage;  // Store the gradient image
 
@@ -63,12 +80,20 @@ public:
     void resized() override;
     QuarterCircle& getQuad(int index);
     void paint(juce::Graphics&) override;
+    
+    void mouseDown(const juce::MouseEvent&) override { setMouseCursor(clickCursor); }
+    void mouseUp(const juce::MouseEvent&) override   { setMouseCursor(normalCursor); }
+
+    
+
 
 private:
     
     float y_position;
     
-
+    juce::MouseCursor normalCursor;
+    juce::MouseCursor clickCursor;
+    
     
     QuarterCircle quads[4] = {
         QuarterCircle(0),
@@ -109,7 +134,13 @@ public:
     void setTargetHerz(float newTargetHerz);
 
 
+
+
 private:
+    
+    juce::MouseCursor normalCursor;
+    juce::MouseCursor clickCursor;
+    
     float y_position_pixels;
     float targetY;
     float herz = 1000.0f;

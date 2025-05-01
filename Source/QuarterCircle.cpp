@@ -25,7 +25,17 @@ QuarterCircle::QuarterCircle(int rotationIndex)
     std::call_once(loadOnce, []() {
         loadFramesIfNeeded();
     });
+    
+    
+    auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
+    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+
+    auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
+    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+
 }
+
+
 
 
 
@@ -98,6 +108,7 @@ void QuarterCircle::paint (juce::Graphics& g)
     g.drawImage (frames[idxB], getLocalBounds().toFloat());
 
     g.setOpacity (1.f);
+    
 }
 
 
@@ -224,15 +235,19 @@ float QuarterCircle::getRadius() const
 
 void QuarterCircle::mouseEnter(const juce::MouseEvent& event)
     {
+        
         isHovered = true;
         repaint();
+        
     }
 
-    void QuarterCircle::mouseExit(const juce::MouseEvent& event)
+void QuarterCircle::mouseExit(const juce::MouseEvent& event)
     {
         isHovered = false;
         repaint();
     }
+
+
 
 
 // ====================================================================================================================
@@ -244,6 +259,15 @@ CircleComponent::CircleComponent()
 {
     for (auto& q : quads)
         addAndMakeVisible(q);
+    
+    auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
+    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+
+    auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
+    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+    
+    setMouseCursor(normalCursor);
+
 }
 
 void CircleComponent::resized()
@@ -296,6 +320,14 @@ frequencyLineComponent::frequencyLineComponent()
 {
     y_position_pixels = targetY = (maxY-minY)*0.5f;
     isDragging = false;
+    
+    
+    auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
+    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+
+    auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
+    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+
     
 }
 void frequencyLineComponent::paint(juce::Graphics& g)
@@ -378,12 +410,16 @@ void frequencyLineComponent::mouseDrag(const juce::MouseEvent& event)
         {
             setInterceptsMouseClicks(false, false);
         }
+        
+        setMouseCursor(clickCursor);
     }
 
     void frequencyLineComponent::mouseUp(const juce::MouseEvent&)
     {
         isDragging = false;
         setInterceptsMouseClicks(true, false);
+        
+        setMouseCursor(normalCursor);
     }
 
     bool frequencyLineComponent::hitTest(int x, int y)

@@ -63,6 +63,13 @@ CustomKnobComponent::CustomKnobComponent()
     slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
     slider.setLookAndFeel(&otherLookAndFeel);
     
+    auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
+    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+
+    auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
+    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+    
+    setMouseCursor(normalCursor);
     
 
     addAndMakeVisible(slider);
@@ -144,6 +151,14 @@ SnapKnob::SnapKnob()
     };
     
     slider.addMouseListener(this, false);
+    
+    auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
+    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+
+    auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
+    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+    
+    setMouseCursor(normalCursor);
 
 
 
@@ -222,6 +237,7 @@ void SnapKnob::mouseUp(const juce::MouseEvent& event)
         slider.setValue(snapLabels[currentSnapIndex].first, juce::sendNotificationSync);
         //DBG("Snap clicked! Index = " << currentSnapIndex);
     }
+    setMouseCursor(normalCursor);
 }
 
 
@@ -282,6 +298,14 @@ knobSection::knobSection(SimpleEQAudioProcessor& proc) : processor(proc)
     addAndMakeVisible(saturationKnob);
     addAndMakeVisible(highcutKnob);
     
+    
+    auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
+    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+
+    auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
+    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+
+    setMouseCursor(normalCursor);
 }
 
 knobSection::~knobSection() {}

@@ -9,6 +9,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
+
 //==============================================================================
 SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor& p)
     : AudioProcessorEditor (&p),
@@ -17,6 +19,18 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
 {
     
     bg_image = juce::ImageCache::getFromMemory(BinaryData::BEURRE_BG_2_png, BinaryData::BEURRE_BG_2_pngSize);
+    
+    auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
+    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+
+    auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
+    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+
+    addMouseListener(this, true); // true = receive events from children
+
+    setMouseCursor(normalCursor);
+    
+    
     
     addAndMakeVisible(circle);
     
@@ -28,12 +42,14 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     
     freqLine.toFront(true);
     
-    
         
     setSize (1200, 600);
     
+    
+  
     startTimerHz(40);
    
+    
 
     
     // ======= 🔗 PARAMETER CONNECTIONS START =======
@@ -263,3 +279,7 @@ void SimpleEQAudioProcessorEditor::syncCircleWithFreqLine()
     float y = freqLine.getYposition();
     circle.setBounds(circle.getX(), y - 135, circle.getWidth(), circle.getHeight());
 }
+
+
+
+
