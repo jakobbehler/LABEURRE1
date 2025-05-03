@@ -21,10 +21,10 @@ frequencyLines::~frequencyLines() = default;
 //==============================================================================
 namespace
 {
-    constexpr int kSkipLow  = 6;   // four lowest-frequency bins (bottom rows)
-    constexpr int kSkipHigh = 2;   // one highest-frequency bin  (top row)
+    constexpr int kSkipLow  = 6;   //  lowest-frequency bins
+    constexpr int kSkipHigh = 2;   // highest-frequency bin  (top row)
 
-    constexpr int kLines    = 20;  // how many lines you still want to show
+    constexpr int kLines    = 20;  // how many lines still want to show
 }
 
 //------------------------------------------------------------------

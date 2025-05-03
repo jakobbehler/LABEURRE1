@@ -46,7 +46,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     
     
   
-    startTimerHz(40);
+    startTimerHz(80);
    
     
 

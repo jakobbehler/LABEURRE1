@@ -405,7 +405,7 @@ void SimpleEQAudioProcessor::updateFilter()
     *rightChain.get<3>().coefficients = *coefficients;
     
     //DEBUGGING
-    //DBG("🔀 HighCut: " << cutoff << " Hz");
+    //DBG("HighCut: " << cutoff << " Hz");
 }
 
 
@@ -709,7 +709,7 @@ bool FFTDataGenerator::produceFFTData(std::vector<float>& outputBins)
     
     outputBins.clear();
 
-    const int desiredBins = 28;
+    const int desiredBins = 24;
     const int neighborhood = 0;
 
     float minFreq = 40.0f;
