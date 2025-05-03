@@ -28,10 +28,13 @@ QuarterCircle::QuarterCircle(int rotationIndex)
     
     
     auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
-    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+    normalCursor = juce::MouseCursor(normalImg, normalImg.getWidth() / 2, normalImg.getHeight() / 2);
 
     auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
-    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+    clickCursor = juce::MouseCursor(clickImg, clickImg.getWidth() / 2, clickImg.getHeight() / 2);
+
+    setMouseCursor(normalCursor);
+
 
 }
 
@@ -261,12 +264,13 @@ CircleComponent::CircleComponent()
         addAndMakeVisible(q);
     
     auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
-    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+    normalCursor = juce::MouseCursor(normalImg, normalImg.getWidth() / 2, normalImg.getHeight() / 2);
 
     auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
-    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
-    
+    clickCursor = juce::MouseCursor(clickImg, clickImg.getWidth() / 2, clickImg.getHeight() / 2);
+
     setMouseCursor(normalCursor);
+
 
 }
 
@@ -321,12 +325,13 @@ frequencyLineComponent::frequencyLineComponent()
     y_position_pixels = targetY = (maxY-minY)*0.5f;
     isDragging = false;
     
-    
     auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
-    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+    normalCursor = juce::MouseCursor(normalImg, normalImg.getWidth() / 2, normalImg.getHeight() / 2);
 
     auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
-    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+    clickCursor = juce::MouseCursor(clickImg, clickImg.getWidth() / 2, clickImg.getHeight() / 2);
+
+    setMouseCursor(normalCursor);
 
     
 }

@@ -44,8 +44,11 @@ public:
     void mouseDown(const juce::MouseEvent&) override { setMouseCursor(clickCursor); }
     void mouseUp(const juce::MouseEvent&) override   { setMouseCursor(normalCursor); }
 
+
     
     void addMouseListenerToChildren(juce::MouseListener* listener);
+    
+    void applyCursorToAllChildren(juce::Component& parent);
 
 private:
     // This reference is provided as a quick way for your editor to

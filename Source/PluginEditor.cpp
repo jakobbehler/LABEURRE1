@@ -21,15 +21,14 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     bg_image = juce::ImageCache::getFromMemory(BinaryData::BEURRE_BG_2_png, BinaryData::BEURRE_BG_2_pngSize);
     
     auto normalImg = juce::ImageCache::getFromMemory(BinaryData::cursorNormal_png, BinaryData::cursorNormal_pngSize);
-    normalCursor = juce::MouseCursor(normalImg, 75, 75);  // center hotspot
+    normalCursor = juce::MouseCursor(normalImg, normalImg.getWidth() / 2, normalImg.getHeight() / 2);
 
     auto clickImg = juce::ImageCache::getFromMemory(BinaryData::cursorOnclick_png, BinaryData::cursorOnclick_pngSize);
-    clickCursor = juce::MouseCursor(clickImg, 75, 75);    // center hotspot
+    clickCursor = juce::MouseCursor(clickImg, clickImg.getWidth() / 2, clickImg.getHeight() / 2);
 
     addMouseListener(this, true); // true = receive events from children
 
     setMouseCursor(normalCursor);
-    
     
     
     addAndMakeVisible(circle);
@@ -132,6 +131,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     audioProcessor.apvts.addParameterListener("compLowIntensity", this);
     audioProcessor.apvts.addParameterListener("compHighIntensity", this);
 
+    applyCursorToAllChildren(*this);
 
 
 
@@ -281,5 +281,14 @@ void SimpleEQAudioProcessorEditor::syncCircleWithFreqLine()
 }
 
 
+
+void SimpleEQAudioProcessorEditor::applyCursorToAllChildren(juce::Component& parent)
+{
+    parent.setMouseCursor(normalCursor);
+    parent.addMouseListener(this, true); // ensure events propagate
+
+    for (int i = 0; i < parent.getNumChildComponents(); ++i)
+        applyCursorToAllChildren(*parent.getChildComponent(i));
+}
 
 
